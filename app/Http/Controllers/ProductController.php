@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(){
-
+    // вывод на страницу подробнее
+    public function show(Product $product)
+    {
+        return view('products.show', compact('product'));
     }
 }

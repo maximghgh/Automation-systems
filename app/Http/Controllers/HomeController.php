@@ -15,8 +15,8 @@ class HomeController extends Controller
     function index(){
         $newProducts = Product::query()
             ->latest()
-            ->take(8)
-            ->get(['title', 'image', 'description']);
+//            ->take(8)
+            ->get(['title', 'image', 'description', 'slug']);
 
         $slides = Slider::query()
             ->where('is_active', true)
@@ -28,11 +28,11 @@ class HomeController extends Controller
             ->get(['id', 'name','image']);
 
         $projects = Project::query()
-            ->take(8)
+//            ->take(8)
             ->get(['id','image','title', 'description']);
 
         $deliveryes = Delivery::query()
-            ->take(8)
+            ->take(3)
             ->get(['id','title','icon', 'description']);
 
         $companies = Companies::query()
