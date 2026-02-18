@@ -5,6 +5,7 @@ use \App\Http\Controllers\HomeController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SearchController;
 
 
 Route::get('/', function () {
@@ -31,3 +32,6 @@ Route::get('/projects', [ProjectController::class, 'index'])
 // путь для страницы подробнее о проекте
 Route::get('/projects/{project}', [ProjectController::class, 'show'])
     ->name('projects.show');
+
+// путь для поиска
+Route::get('/search', [SearchController::class, 'search'])->name('search');
