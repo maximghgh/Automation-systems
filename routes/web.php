@@ -8,10 +8,6 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SearchController;
 
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 // путь для главной страницы (вывод для баннера, слайдера, бренды, новинок, проекты, доставка, транспортные компании)
 Route::get('/', [HomeController::class, 'index']);
 
@@ -35,3 +31,7 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])
 
 // путь для поиска
 Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+
+Route::post('/form-request', [\App\Http\Controllers\Api\CallControllers::class, 'call'])
+    ->name('form-request.call');

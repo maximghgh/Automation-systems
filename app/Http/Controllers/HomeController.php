@@ -5,14 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Companies;
 use App\Models\Delivery;
+use App\Models\EmailType;
 use App\Models\Product;
 use App\Models\Project;
-use Illuminate\Http\Request;
 use App\Models\Slider;
 
 class HomeController extends Controller
 {
-    function index(){
+    public function index()
+    {
+        $emailTypes = EmailType::query()
+            ->orderBy('id')
+            ->get(['id', 'type']);
+
         $newProducts = Product::query()
             ->latest()
 //            ->take(8)
@@ -38,6 +43,14 @@ class HomeController extends Controller
         $companies = Companies::query()
             ->get(['name']);
 
-        return view('welcome', compact('newProducts', 'slides', 'brands', 'projects', 'deliveryes', 'companies'));
+        return view('welcome', compact(
+            'emailTypes',
+            'newProducts',
+            'slides',
+            'brands',
+            'projects',
+            'deliveryes',
+            'companies'
+        ));
     }
 }
