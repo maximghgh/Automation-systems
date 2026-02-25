@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use \App\Http\Controllers\HomeController;
+use App\Http\Controllers\Api\CallControllers;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProjectController;
@@ -33,5 +35,8 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])
 Route::get('/search', [SearchController::class, 'search'])->name('search');
 
 
-Route::post('/form-request', [\App\Http\Controllers\Api\CallControllers::class, 'call'])
+Route::post('/form-request', [CallControllers::class, 'call'])
     ->name('form-request.call');
+
+Route::post('/order-request', [OrderController::class, 'submitForm'])
+    ->name('order-request.send');
