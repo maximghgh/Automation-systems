@@ -10,7 +10,7 @@ class ProjectController extends Controller
 
     function index(){
         $projects = Project::query()
-            ->select('title', 'description', 'image')
+            ->select('id', 'title', 'description', 'image')
             ->orderByDesc('created_at')
             ->paginate(6);
 
