@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use \App\Http\Controllers\HomeController;
+use App\Http\Controllers\AdvantagesController;
 use App\Http\Controllers\Api\CallControllers;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\ServicesController;
@@ -33,6 +34,10 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])
 
 // путь для поиска
 Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+// путь для страницы преимуществ
+Route::get('/advantages', [AdvantagesController::class, 'index'])
+    ->name('advantages.index');
 
 
 Route::post('/form-request', [CallControllers::class, 'call'])
