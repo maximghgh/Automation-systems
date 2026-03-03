@@ -20,7 +20,15 @@ class ProjectsForm
                 ->label('Название проекта')
                 ->placeholder('Проект')
                 ->required()
-                ->maxLength(255),
+                ->maxLength(255)
+                ->afterStateUpdated(function (string $state, callable $set, callable $get) {
+                    if (! $get('slug')) {
+                        $set('slug', Str::slug($state)); // -> latin slug
+                    }
+                }),
+
+            Hidden::make('slug')
+                ->required(),
 
             FileUpload::make('image')
                 ->label('Картинка')

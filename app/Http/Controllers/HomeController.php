@@ -21,7 +21,7 @@ class HomeController extends Controller
         $newProducts = Product::query()
             ->latest()
 //            ->take(8)
-            ->get(['id', 'title', 'image', 'description', 'slug']);
+            ->get(['id', 'title', 'image', 'short_description', 'slug']);
 
         $slides = Slider::query()
             ->where('is_active', true)

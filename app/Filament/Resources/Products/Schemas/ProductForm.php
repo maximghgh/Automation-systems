@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 
+use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -52,6 +54,13 @@ class ProductForm
                 ->visibility('public')
                 ->nullable(),
 
+            Textarea::make('short_description')
+                ->label('Краткое описание')
+                ->placeholder('Описание')
+                ->required()
+                ->rows(6)
+                ->columnSpanFull(),
+
             MarkdownEditor::make('description')
                 ->label('Описание')
                 ->columnSpanFull()
@@ -61,6 +70,26 @@ class ProductForm
                 ->label('Характеристики')
                 ->columnSpanFull()
                 ->nullable(),
+
+            Repeater::make('tabs')
+                ->label('Дополнительные табы')
+                ->relationship('tabs')
+                ->orderColumn('sort_order')
+                ->itemLabel(fn (?array $state): ?string => $state['title'] ?? null)
+                ->collapsible()
+                ->cloneable()
+                ->schema([
+                    TextInput::make('title')
+                        ->label('Название таба')
+                        ->required()
+                        ->maxLength(255),
+
+                    MarkdownEditor::make('content')
+                        ->label('Содержимое')
+                        ->nullable()
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 }

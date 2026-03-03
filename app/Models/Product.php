@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    protected $fillable = ['title', 'slug', 'image', 'description', 'content', 'brand_id'];
+    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id'];
 
     public function brand()
     {
@@ -16,6 +17,11 @@ class Product extends Model
     public function categories()
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function tabs(): HasMany
+    {
+        return $this->hasMany(ProductTab::class)->orderBy('sort_order');
     }
 
     public function getRouteKeyName()

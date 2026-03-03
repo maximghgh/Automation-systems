@@ -11,7 +11,7 @@
   @include('components.header')
 
   @php
-    $product->loadMissing(['brand', 'categories']);
+    $product->loadMissing(['brand', 'categories', 'tabs']);
 
     $mediaUrl = static function ($path, $fallback = '') {
       if (empty($path)) {
@@ -36,6 +36,39 @@
     $contentHtml = trim((string) $product->content) !== ''
       ? \Illuminate\Support\Str::markdown($product->content)
       : '<p></p>';
+
+    $tabs = collect([
+      ['key' => 'description', 'title' => 'Описание', 'html' => $descriptionHtml],
+      ['key' => 'specifications', 'title' => 'Характеристики', 'html' => $contentHtml],
+    ]);
+
+    $usedTabKeys = $tabs->pluck('key')->flip()->all();
+
+    foreach ($product->tabs as $tab) {
+      $baseTabKey = \Illuminate\Support\Str::slug((string) $tab->title);
+
+      if ($baseTabKey === '') {
+        $baseTabKey = 'tab-' . $tab->id;
+      }
+
+      $tabKey = $baseTabKey;
+      $tabSuffix = 1;
+
+      while (isset($usedTabKeys[$tabKey])) {
+        $tabKey = $baseTabKey . '-' . $tabSuffix;
+        $tabSuffix++;
+      }
+
+      $usedTabKeys[$tabKey] = true;
+
+      $tabs->push([
+        'key' => $tabKey,
+        'title' => $tab->title,
+        'html' => trim((string) $tab->content) !== ''
+          ? \Illuminate\Support\Str::markdown($tab->content)
+          : '<p></p>',
+      ]);
+    }
 
     $categoryNames = $product->categories->pluck('name')->filter()->implode(', ');
   @endphp
@@ -96,21 +129,21 @@
 
       <div class="card__content">
         <div class="catalog__switch card__content-switch">
-          <div class="catalog__switch-item active" data-card-tab="description">
-            Описание
-          </div>
-          <div class="catalog__switch-line"></div>
-          <div class="catalog__switch-item" data-card-tab="specifications">
-            Характеристики
-          </div>
+          @foreach($tabs as $tab)
+            <div class="catalog__switch-item {{ $loop->first ? 'active' : '' }}" data-card-tab="{{ $tab['key'] }}">
+              {{ $tab['title'] }}
+            </div>
+            @if(! $loop->last)
+              <div class="catalog__switch-line"></div>
+            @endif
+          @endforeach
         </div>
         <div class="card__editor">
-          <div class="card__editor-panel is-active" data-card-tab-panel="description">
-            {!! $descriptionHtml !!}
-          </div>
-          <div class="card__editor-panel" data-card-tab-panel="specifications">
-            {!! $contentHtml !!}
-          </div>
+          @foreach($tabs as $tab)
+            <div class="card__editor-panel {{ $loop->first ? 'is-active' : '' }}" data-card-tab-panel="{{ $tab['key'] }}">
+              {!! $tab['html'] !!}
+            </div>
+          @endforeach
         </div>
       </div>
     </section>

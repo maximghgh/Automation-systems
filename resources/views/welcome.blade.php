@@ -229,6 +229,7 @@
             <img src="{{ $mediaUrl($product->image, '/assets/272582fd9c288dc352c6e9e18a1c2ebd46283542.png') }}" alt="{{ $product->title }}">
           </div>
           <p class="main-new__name">{{ $product->title }}</p>
+          <p class="main-projects__text">{{ $product->short_description }}</p>
           <a href="{{ route('products.show', $product) }}" class="btn btn__blue main-new__btn">Подробнее</a>
         </div>
         @empty

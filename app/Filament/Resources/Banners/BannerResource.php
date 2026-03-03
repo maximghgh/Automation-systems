@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 
 class BannerResource extends Resource
 {
+    public const MAX_BANNERS = 1;
 
     protected static ?string $navigationLabel = 'Баннеры';
     protected static ?string $pluralModelLabel = 'Баннеры';
@@ -41,6 +42,12 @@ class BannerResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function canCreate(): bool
+    {
+        return parent::canCreate()
+            && Banner::query()->count() < self::MAX_BANNERS;
     }
 
     public static function getPages(): array

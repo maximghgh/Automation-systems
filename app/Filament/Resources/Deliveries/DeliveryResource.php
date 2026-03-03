@@ -16,6 +16,8 @@ use Filament\Tables\Table;
 
 class DeliveryResource extends Resource
 {
+    public const MAX_DELIVERIES = 3;
+
     protected static ?string $model = Delivery::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -41,6 +43,12 @@ class DeliveryResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function canCreate(): bool
+    {
+        return parent::canCreate()
+            && Delivery::query()->count() < self::MAX_DELIVERIES;
     }
 
     public static function getPages(): array
