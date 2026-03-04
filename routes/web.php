@@ -39,9 +39,10 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 Route::get('/advantages', [AdvantagesController::class, 'index'])
     ->name('advantages.index');
 
-
+// путь отправки сообщения менеджеру с формы обращения
 Route::post('/form-request', [CallControllers::class, 'call'])
     ->name('form-request.call');
 
+// путь отправки сообщения меннеджеру с корзины    
 Route::post('/order-request', [OrderController::class, 'submitForm'])
     ->name('order-request.send');

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Tables;
 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DeleteAction;
@@ -44,6 +45,11 @@ class ProductsTable
                     ->label('Slug')
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                IconColumn::make('is_new')
+                    ->label('Новинка')
+                    ->boolean()
+                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('Создан')

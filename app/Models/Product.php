@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id'];
+    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id', 'is_new'];
+
+    protected $casts = [
+        'is_new' => 'boolean',
+    ];
 
     public function brand()
     {

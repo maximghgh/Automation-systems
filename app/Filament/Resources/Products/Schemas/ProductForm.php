@@ -10,6 +10,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Hidden;
 use Illuminate\Support\Str;
 
@@ -60,6 +61,11 @@ class ProductForm
                 ->required()
                 ->rows(6)
                 ->columnSpanFull(),
+
+            Toggle::make('is_new')
+                ->label('Новинка')
+                ->default(false)
+                ->inline(false),
 
             MarkdownEditor::make('description')
                 ->label('Описание')

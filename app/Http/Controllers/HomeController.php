@@ -19,6 +19,7 @@ class HomeController extends Controller
             ->get(['id', 'type']);
 
         $newProducts = Product::query()
+            ->where('is_new', true)
             ->latest()
 //            ->take(8)
             ->get(['id', 'title', 'image', 'short_description', 'slug']);
