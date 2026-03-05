@@ -10,6 +10,7 @@ use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\CatalogController;
 
 
 // путь для главной страницы (вывод для баннера, слайдера, бренды, новинок, проекты, доставка, транспортные компании)
@@ -41,6 +42,12 @@ Route::get('/projects/{project}', [ProjectController::class, 'show'])
 
 // путь для поиска
 Route::get('/search', [SearchController::class, 'search'])->name('search');
+
+// Каталог
+
+// путь для страницы каталога + фильтры (бренды, категории, подкатегории)
+Route::get('/catalog', [CatalogController::class, 'index'])
+    ->name('catalog.index');
 
 // Приемущества
 
