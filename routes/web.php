@@ -20,6 +20,9 @@ Route::get('/', [HomeController::class, 'index']);
 Route::get('/about', [AboutPageController::class, 'show'])
     ->name('about.show');
 
+Route::view('/about-us', 'about_us')
+    ->name('about.page');
+
 // путь для страницы подробнее о услуги
 Route::get('/services/{service}', [ServicesController::class, 'show'])
     ->name('services.show');
