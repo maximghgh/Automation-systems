@@ -3,15 +3,17 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Schema;
+use App\Models\Subcategory;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Hidden;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class ProductForm
@@ -40,12 +42,22 @@ class ProductForm
                 ->preload()
                 ->nullable(),
 
-            Select::make('categories')
-                ->label('Категории')
-                ->relationship('categories', 'name') // берет name из таблицы categories
-                ->multiple()
+            Select::make('subcategory_id')
+                ->label('Подкатегория')
+                ->relationship(
+                    name: 'subcategory',
+                    titleAttribute: 'name',
+                    modifyQueryUsing: fn (Builder $query) => $query
+                        ->with('category')
+                        ->orderBy('category_id')
+                        ->orderBy('name'),
+                )
+                ->getOptionLabelFromRecordUsing(
+                    fn (Subcategory $record): string => trim(($record->category?->name ? $record->category->name . ' / ' : '') . $record->name)
+                )
                 ->searchable()
-                ->preload(),
+                ->preload()
+                ->required(),
 
             FileUpload::make('image')
                 ->label('Картинка')
@@ -67,20 +79,16 @@ class ProductForm
                 ->default(false)
                 ->inline(false),
 
-            MarkdownEditor::make('description')
-                ->label('Описание')
-                ->columnSpanFull()
-                ->nullable(),
-
-            MarkdownEditor::make('content')
-                ->label('Характеристики')
-                ->columnSpanFull()
-                ->nullable(),
-
             Repeater::make('tabs')
-                ->label('Дополнительные табы')
+                ->label('Табы')
                 ->relationship('tabs')
                 ->orderColumn('sort_order')
+                ->default([
+                    [
+                        'title' => 'Описание',
+                        'content' => null,
+                    ],
+                ])
                 ->itemLabel(fn (?array $state): ?string => $state['title'] ?? null)
                 ->collapsible()
                 ->cloneable()

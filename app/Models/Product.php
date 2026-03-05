@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id', 'is_new'];
+    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id', 'subcategory_id', 'is_new'];
 
     protected $casts = [
         'is_new' => 'boolean',
@@ -18,9 +20,22 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
-    public function categories()
+    public function subcategory(): BelongsTo
     {
-        return $this->belongsToMany(Category::class);
+        return $this->belongsTo(Subcategory::class);
+    }
+
+    public function categories(): BelongsToMany
+    {
+        // Compatibility relation (0..1 category) through selected subcategory.
+        return $this->belongsToMany(
+            Category::class,
+            'subcategories',
+            'id',
+            'category_id',
+            'subcategory_id',
+            'id',
+        );
     }
 
     public function tabs(): HasMany

@@ -20,6 +20,11 @@ class CategoriesTable
                     ->searchable()
                     ->sortable()
                     ->limit(40),
+
+                TextColumn::make('subcategories_count')
+                    ->label('Подкатегории')
+                    ->counts('subcategories')
+                    ->sortable(),
             ])
             ->filters([
                 //

@@ -34,11 +34,14 @@ class ProductsTable
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('categories.name')
-                    ->label('Категории')
-                    ->badge()
-                    ->separator(', ')
-                    ->limit(2)
+                TextColumn::make('subcategory.category.name')
+                    ->label('Категория')
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('subcategory.name')
+                    ->label('Подкатегория')
+                    ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('slug')
