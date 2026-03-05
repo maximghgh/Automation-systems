@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Category extends Model
 {
@@ -15,13 +14,8 @@ class Category extends Model
         return $this->hasMany(Subcategory::class)->orderBy('sort_order');
     }
 
-    public function products(): HasManyThrough
+    public function products(): HasMany
     {
-        return $this->hasManyThrough(
-            Product::class,
-            Subcategory::class,
-            'category_id',
-            'subcategory_id'
-        );
+        return $this->hasMany(Product::class);
     }
 }

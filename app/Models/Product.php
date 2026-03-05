@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id', 'subcategory_id', 'is_new'];
+    protected $fillable = ['title', 'slug', 'image', 'short_description', 'description', 'content', 'brand_id', 'category_id', 'subcategory_id', 'is_new'];
 
     protected $casts = [
         'is_new' => 'boolean',
@@ -23,6 +23,11 @@ class Product extends Model
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function categories(): BelongsToMany

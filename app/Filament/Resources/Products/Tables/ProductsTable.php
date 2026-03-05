@@ -34,13 +34,14 @@ class ProductsTable
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('subcategory.category.name')
+                TextColumn::make('category.name')
                     ->label('Категория')
                     ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('subcategory.name')
                     ->label('Подкатегория')
+                    ->placeholder('—')
                     ->sortable()
                     ->toggleable(),
 

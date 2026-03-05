@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 
+use App\Models\Category;
 use App\Models\Subcategory;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -13,7 +14,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class ProductForm
@@ -42,22 +42,16 @@ class ProductForm
                 ->preload()
                 ->nullable(),
 
-            Select::make('subcategory_id')
-                ->label('Подкатегория')
-                ->relationship(
-                    name: 'subcategory',
-                    titleAttribute: 'name',
-                    modifyQueryUsing: fn (Builder $query) => $query
-                        ->with('category')
-                        ->orderBy('category_id')
-                        ->orderBy('name'),
-                )
-                ->getOptionLabelFromRecordUsing(
-                    fn (Subcategory $record): string => trim(($record->category?->name ? $record->category->name . ' / ' : '') . $record->name)
-                )
+            Select::make('catalog_node')
+                ->label('Категория / Подкатегория')
+                ->options(fn (): array => self::getCatalogNodeOptions())
                 ->searchable()
                 ->preload()
                 ->required(),
+
+            Hidden::make('category_id'),
+
+            Hidden::make('subcategory_id'),
 
             FileUpload::make('image')
                 ->label('Картинка')
@@ -105,5 +99,86 @@ class ProductForm
                 ])
                 ->columnSpanFull(),
         ]);
+    }
+
+    public static function mapCatalogNodeToCategoryFields(array $data): array
+    {
+        $data['category_id'] = null;
+        $data['subcategory_id'] = null;
+
+        $catalogNode = $data['catalog_node'] ?? null;
+
+        if (is_string($catalogNode) && str_starts_with($catalogNode, 'subcategory:')) {
+            $subcategoryId = (int) Str::after($catalogNode, 'subcategory:');
+            $subcategory = Subcategory::query()
+                ->select(['id', 'category_id'])
+                ->find($subcategoryId);
+
+            if ($subcategory) {
+                $data['subcategory_id'] = $subcategory->id;
+                $data['category_id'] = $subcategory->category_id;
+            }
+        }
+
+        if (is_string($catalogNode) && str_starts_with($catalogNode, 'category:')) {
+            $categoryId = (int) Str::after($catalogNode, 'category:');
+
+            $categoryExists = Category::query()
+                ->whereKey($categoryId)
+                ->doesntHave('subcategories')
+                ->exists();
+
+            if ($categoryExists) {
+                $data['category_id'] = $categoryId;
+                $data['subcategory_id'] = null;
+            }
+        }
+
+        unset($data['catalog_node']);
+
+        return $data;
+    }
+
+    public static function mapCategoryFieldsToCatalogNode(array $data): array
+    {
+        if (! empty($data['subcategory_id'])) {
+            $data['catalog_node'] = 'subcategory:' . $data['subcategory_id'];
+
+            return $data;
+        }
+
+        if (! empty($data['category_id'])) {
+            $data['catalog_node'] = 'category:' . $data['category_id'];
+        }
+
+        return $data;
+    }
+
+    private static function getCatalogNodeOptions(): array
+    {
+        $categories = Category::query()
+            ->with([
+                'subcategories' => fn ($query) => $query
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->select(['id', 'category_id', 'name']),
+            ])
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $options = [];
+
+        foreach ($categories as $category) {
+            if ($category->subcategories->isEmpty()) {
+                $options['category:' . $category->id] = $category->name;
+                continue;
+            }
+
+            foreach ($category->subcategories as $subcategory) {
+                $options['subcategory:' . $subcategory->id] = $category->name . ' / ' . $subcategory->name;
+            }
+        }
+
+        return $options;
     }
 }

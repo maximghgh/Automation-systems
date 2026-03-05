@@ -19,6 +19,8 @@ class CategoryForm
                 Repeater::make('subcategories')
                     ->label('Подкатегории')
                     ->relationship('subcategories')
+                    ->defaultItems(0)
+                    ->addActionLabel('Добавить подкатегорию')
                     ->orderColumn('sort_order')
                     ->itemLabel(fn (?array $state): ?string => $state['name'] ?? null)
                     ->collapsible()

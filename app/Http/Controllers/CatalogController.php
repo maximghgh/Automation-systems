@@ -24,8 +24,8 @@ class CatalogController extends Controller
         $productsQuery = Product::query()
             ->with([
                 'brand:id,name',
+                'category:id,name',
                 'subcategory:id,category_id,name',
-                'subcategory.category:id,name',
             ])
             ->orderByDesc('id');
 
@@ -34,7 +34,7 @@ class CatalogController extends Controller
         }
 
         if ($categoryIds !== []) {
-            $productsQuery->whereHas('subcategory', fn ($query) => $query->whereIn('category_id', $categoryIds));
+            $productsQuery->whereIn('category_id', $categoryIds);
         }
 
         if ($subcategoryIds !== []) {
@@ -48,6 +48,7 @@ class CatalogController extends Controller
             'image',
             'short_description',
             'brand_id',
+            'category_id',
             'subcategory_id',
             'is_new',
         ]);
@@ -98,9 +99,9 @@ class CatalogController extends Controller
                     'id' => $product->brand->id,
                     'name' => $product->brand->name,
                 ] : null,
-                'category' => $product->subcategory?->category ? [
-                    'id' => $product->subcategory->category->id,
-                    'name' => $product->subcategory->category->name,
+                'category' => $product->category ? [
+                    'id' => $product->category->id,
+                    'name' => $product->category->name,
                 ] : null,
                 'subcategory' => $product->subcategory ? [
                     'id' => $product->subcategory->id,
