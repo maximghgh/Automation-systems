@@ -767,10 +767,22 @@
   var projectToggle = basket.querySelector("[data-basket-project-toggle]");
   var projectPanel = basket.querySelector("[data-basket-project-panel]");
   var requestPanel = basket.querySelector("[data-basket-request-panel]");
+  var orderForm = basket.querySelector("[data-basket-order-form]");
+  var formMessage = basket.querySelector("[data-basket-form-message]");
+  var fileInput = basket.querySelector("[data-basket-file-input]");
+  var filesSummary = basket.querySelector("[data-basket-files-summary]");
+  var filesList = basket.querySelector("[data-basket-files-list]");
+  var filesPlaceholder = basket.querySelector("[data-basket-files-placeholder]");
+  var defaultFilesPlaceholderText = filesPlaceholder
+    ? String(filesPlaceholder.textContent || "").trim()
+    : "";
+  var selectedFilesPlaceholderText = "Нажмите, чтобы добавить еще файлы";
   var stepOrder = ["cart", "details", "request"];
   var cartButtonText = nextButton ? nextButton.getAttribute("data-basket-text-cart") || nextButton.textContent : "";
   var detailsButtonText = nextButton ? nextButton.getAttribute("data-basket-text-details") || cartButtonText : "";
   var currentStep = "cart";
+  var isSubmitting = false;
+  var selectedFiles = [];
 
   function getStepIndex(step) {
     return stepOrder.indexOf(step);
@@ -826,6 +838,437 @@
     projectPanel.hidden = !isOpen;
   }
 
+  function setFormMessage(message, isError) {
+    if (!formMessage) {
+      return;
+    }
+
+    var hasMessage = typeof message === "string" && message.trim().length > 0;
+    formMessage.hidden = !hasMessage;
+    formMessage.textContent = hasMessage ? message.trim() : "";
+    formMessage.style.color = isError ? "#BC5555" : "#2f855a";
+  }
+
+  function normalizePhoneDigits(value) {
+    var digits = (value || "").replace(/\D/g, "");
+
+    if (!digits.length) {
+      return "";
+    }
+
+    if (digits.charAt(0) === "8") {
+      digits = "7" + digits.slice(1);
+    } else if (digits.charAt(0) === "9") {
+      digits = "7" + digits;
+    } else if (digits.charAt(0) !== "7") {
+      digits = "7" + digits;
+    }
+
+    return digits.slice(0, 11);
+  }
+
+  function formatRuPhone(value) {
+    var digits = normalizePhoneDigits(value);
+
+    if (!digits.length) {
+      return "";
+    }
+
+    var localDigits = digits.slice(1);
+    var formatted = "+7";
+
+    if (localDigits.length > 0) {
+      formatted += " (" + localDigits.slice(0, 3);
+    }
+
+    if (localDigits.length >= 3) {
+      formatted += ")";
+    }
+
+    if (localDigits.length > 3) {
+      formatted += " " + localDigits.slice(3, 6);
+    }
+
+    if (localDigits.length > 6) {
+      formatted += "-" + localDigits.slice(6, 8);
+    }
+
+    if (localDigits.length > 8) {
+      formatted += "-" + localDigits.slice(8, 10);
+    }
+
+    return formatted;
+  }
+
+  var fieldMessages = {
+    name: {
+      required: "Ваше имя",
+    },
+    email: {
+      required: "Ваш email",
+      invalid: "Введите корректный email",
+    },
+    phone: {
+      required: "Ваш номер телефона",
+      invalid: "Введите корректный номер телефона",
+    },
+  };
+
+  function getFieldNode(fieldName) {
+    if (!orderForm) {
+      return null;
+    }
+
+    return orderForm.querySelector('[data-form-field="' + fieldName + '"]');
+  }
+
+  function getErrorNode(fieldName) {
+    if (!orderForm) {
+      return null;
+    }
+
+    return orderForm.querySelector('[data-form-error="' + fieldName + '"]');
+  }
+
+  function showError(fieldName, message) {
+    var field = getFieldNode(fieldName);
+    var error = getErrorNode(fieldName);
+
+    if (field) {
+      field.classList.add("is-invalid");
+      field.setAttribute("aria-invalid", "true");
+    }
+
+    if (error) {
+      error.textContent = message;
+      error.classList.add("is-visible");
+    }
+  }
+
+  function clearError(fieldName) {
+    var field = getFieldNode(fieldName);
+    var error = getErrorNode(fieldName);
+
+    if (field) {
+      field.classList.remove("is-invalid");
+      field.setAttribute("aria-invalid", "false");
+    }
+
+    if (error) {
+      error.textContent = "";
+      error.classList.remove("is-visible");
+    }
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function validateField(fieldName) {
+    var field = getFieldNode(fieldName);
+    if (!field) {
+      return true;
+    }
+
+    var value = field.value.trim();
+    var messages = fieldMessages[fieldName] || {};
+
+    if (!value.length) {
+      showError(fieldName, messages.required || "Поле обязательно");
+      return false;
+    }
+
+    if (fieldName === "phone") {
+      var digits = normalizePhoneDigits(value);
+      if (digits.length < 11) {
+        showError(fieldName, messages.invalid || "Некорректное значение");
+        return false;
+      }
+    }
+
+    if (fieldName === "email" && !isValidEmail(value)) {
+      showError(fieldName, messages.invalid || "Некорректное значение");
+      return false;
+    }
+
+    clearError(fieldName);
+    return true;
+  }
+
+  function getFileFingerprint(file) {
+    return [
+      file && file.name ? String(file.name) : "",
+      file && Number.isFinite(file.size) ? String(file.size) : "",
+      file && Number.isFinite(file.lastModified) ? String(file.lastModified) : "",
+      file && file.type ? String(file.type) : "",
+    ].join("::");
+  }
+
+  function getSelectedFiles() {
+    if (selectedFiles.length > 0) {
+      return selectedFiles.slice();
+    }
+
+    if (!fileInput) {
+      return [];
+    }
+
+    return Array.from(fileInput.files || []);
+  }
+
+  function syncInputFilesFromSelectedFiles() {
+    if (!fileInput) {
+      return;
+    }
+
+    if (typeof DataTransfer === "undefined") {
+      return;
+    }
+
+    var dataTransfer = new DataTransfer();
+    selectedFiles.forEach(function (file) {
+      dataTransfer.items.add(file);
+    });
+    fileInput.files = dataTransfer.files;
+  }
+
+  function mergeSelectedFiles(filesToAdd) {
+    if (!Array.isArray(filesToAdd) || filesToAdd.length === 0) {
+      return;
+    }
+
+    var current = getSelectedFiles();
+    var known = {};
+
+    current.forEach(function (file) {
+      known[getFileFingerprint(file)] = true;
+    });
+
+    filesToAdd.forEach(function (file) {
+      var key = getFileFingerprint(file);
+      if (!known[key]) {
+        known[key] = true;
+        current.push(file);
+      }
+    });
+
+    selectedFiles = current;
+    syncInputFilesFromSelectedFiles();
+  }
+
+  function clearSelectedFiles() {
+    selectedFiles = [];
+
+    if (!fileInput) {
+      return;
+    }
+
+    if (typeof DataTransfer !== "undefined") {
+      var dataTransfer = new DataTransfer();
+      fileInput.files = dataTransfer.files;
+      return;
+    }
+
+    fileInput.value = "";
+  }
+
+  function updateSelectedFilesUi() {
+    if (!fileInput || !filesSummary || !filesList) {
+      return;
+    }
+
+    var files = getSelectedFiles();
+    var hasFiles = files.length > 0;
+
+    filesSummary.hidden = !hasFiles;
+    filesList.hidden = !hasFiles;
+
+    if (filesPlaceholder) {
+      filesPlaceholder.hidden = false;
+      filesPlaceholder.textContent = hasFiles
+        ? selectedFilesPlaceholderText
+        : defaultFilesPlaceholderText;
+    }
+
+    if (!hasFiles) {
+      filesSummary.textContent = "";
+      filesList.innerHTML = "";
+      return;
+    }
+
+    filesSummary.textContent = "Выбрано файлов: " + String(files.length);
+    filesList.innerHTML = "";
+    files.forEach(function (file) {
+      var sizeKb = Math.max(1, Math.round((file.size || 0) / 1024));
+      var item = document.createElement("li");
+      item.textContent = file.name + " (" + String(sizeKb) + " KB)";
+      filesList.appendChild(item);
+    });
+  }
+
+  function extractFirstError(errors) {
+    if (!errors || typeof errors !== "object") {
+      return "";
+    }
+
+    var keys = Object.keys(errors);
+    for (var i = 0; i < keys.length; i += 1) {
+      var messages = errors[keys[i]];
+      if (Array.isArray(messages) && messages.length > 0) {
+        return String(messages[0]);
+      }
+    }
+
+    return "";
+  }
+
+  function getBasketItems() {
+    if (!window.AutomationCart || typeof window.AutomationCart.get !== "function") {
+      return [];
+    }
+
+    var cart = window.AutomationCart.get();
+    if (!Array.isArray(cart)) {
+      return [];
+    }
+
+    return cart.map(function (item) {
+      var quantity = parseInt(item && item.qty, 10);
+      if (!Number.isFinite(quantity) || quantity < 1) {
+        quantity = 1;
+      }
+
+      var productId = parseInt(item && item.id, 10);
+      var slug = item && item.slug ? String(item.slug).trim() : "";
+      var title = item && item.title ? String(item.title).trim() : "";
+      var image = item && item.image ? String(item.image).trim() : "";
+
+      var normalized = {
+        quantity: quantity,
+        options: [],
+      };
+
+      if (Number.isFinite(productId) && productId > 0) {
+        normalized.id = productId;
+        normalized.product_id = productId;
+      }
+
+      if (slug.length > 0) {
+        normalized.slug = slug;
+        normalized.url = "/products/" + encodeURIComponent(slug);
+      }
+
+      if (title.length > 0) {
+        normalized.name = title;
+        normalized.title = title;
+      }
+
+      if (image.length > 0) {
+        normalized.photo = image;
+        normalized.image = image;
+      }
+
+      return normalized;
+    }).filter(function (item) {
+      return !!item.id || !!item.product_id || !!item.slug;
+    });
+  }
+
+  async function submitOrderForm() {
+    if (!orderForm || isSubmitting) {
+      return false;
+    }
+
+    var isNameValid = validateField("name");
+    var isEmailValid = validateField("email");
+    var isPhoneValid = validateField("phone");
+
+    if (!isNameValid || !isEmailValid || !isPhoneValid) {
+      return false;
+    }
+
+    var agreement = orderForm.querySelector("[data-basket-agreement]");
+    if (agreement && !agreement.checked) {
+      setFormMessage("Подтвердите обработку персональных данных.", true);
+      agreement.focus();
+      return false;
+    }
+
+    var items = getBasketItems();
+    if (items.length === 0) {
+      setFormMessage("Корзина пуста. Добавьте товары перед отправкой заявки.", true);
+      return false;
+    }
+
+    var action = orderForm.getAttribute("action") || "/order-request";
+    var method = (orderForm.getAttribute("method") || "POST").toUpperCase();
+    var formData = new FormData(orderForm);
+    formData.set("items", JSON.stringify(items));
+
+    var files = getSelectedFiles();
+    formData.delete("attachment[]");
+    formData.delete("attachment");
+    formData.delete("files[]");
+    formData.delete("files");
+    files.forEach(function (file) {
+      formData.append("attachment[]", file, file.name);
+    });
+
+    setFormMessage("Отправляем заявку...", false);
+    isSubmitting = true;
+    if (nextButton) {
+      nextButton.disabled = true;
+    }
+
+    try {
+      var response = await fetch(action, {
+        method: method,
+        body: formData,
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+
+      var payload = null;
+      try {
+        payload = await response.json();
+      } catch (_jsonError) {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        var firstError = extractFirstError(payload && payload.errors);
+        var errorMessage = firstError || (payload && payload.message) || "Не удалось отправить заявку.";
+        setFormMessage(errorMessage, true);
+        return false;
+      }
+
+      setFormMessage("", false);
+
+      if (orderForm) {
+        orderForm.reset();
+      }
+      ["name", "email", "phone"].forEach(clearError);
+      clearSelectedFiles();
+      updateSelectedFilesUi();
+
+      if (window.AutomationCart && typeof window.AutomationCart.clear === "function") {
+        window.AutomationCart.clear();
+      }
+
+      return true;
+    } catch (_error) {
+      setFormMessage("Ошибка отправки. Проверьте интернет и повторите попытку.", true);
+      return false;
+    } finally {
+      isSubmitting = false;
+      if (nextButton) {
+        nextButton.disabled = false;
+      }
+    }
+  }
+
   if (nextButton) {
     nextButton.addEventListener("click", function () {
       if (currentStep === "cart") {
@@ -834,7 +1277,11 @@
       }
 
       if (currentStep === "details") {
-        syncStepUi("request");
+        submitOrderForm().then(function (isSuccess) {
+          if (isSuccess) {
+            syncStepUi("request");
+          }
+        });
       }
     });
   }
@@ -870,6 +1317,55 @@
     });
     setProjectPanelState(false);
   }
+
+  if (fileInput) {
+    fileInput.addEventListener("change", function () {
+      mergeSelectedFiles(Array.from(fileInput.files || []));
+      updateSelectedFilesUi();
+    });
+  }
+
+  ["name", "email", "phone"].forEach(function (fieldName) {
+    var field = getFieldNode(fieldName);
+    if (!field) {
+      return;
+    }
+
+    field.addEventListener("input", function () {
+      if (fieldName === "phone") {
+        field.value = formatRuPhone(field.value);
+      }
+
+      if (field.classList.contains("is-invalid")) {
+        validateField(fieldName);
+      }
+    });
+
+    if (fieldName === "phone") {
+      field.addEventListener("focus", function () {
+        if (!field.value.trim()) {
+          field.value = "+7 (";
+        }
+      });
+
+      field.addEventListener("blur", function () {
+        if (field.value === "+7 (" || field.value === "+7") {
+          field.value = "";
+        }
+      });
+    }
+
+    field.addEventListener("blur", function () {
+      validateField(fieldName);
+    });
+  });
+
+  var basketPhoneField = getFieldNode("phone");
+  if (basketPhoneField) {
+    basketPhoneField.value = formatRuPhone(basketPhoneField.value);
+  }
+
+  updateSelectedFilesUi();
 
   syncStepUi("cart");
 })();

@@ -82,15 +82,6 @@
             </li>
         @endif
     </ul>
-
-    @if (isset($attachment) && is_array($attachment) && count($attachment) > 0)
-        <h3>Прикреплённые файлы</h3>
-        <ul>
-            @foreach ($attachment as $file)
-                <li>{{ $file['original_name'] ?? basename($file['path']) }}</li>
-            @endforeach
-        </ul>
-    @endif
 @endif
 </body>
 </html>

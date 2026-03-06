@@ -1319,6 +1319,22 @@ a:hover {
   font-size: 14px;
   padding: 12px 16px;
 }
+.main-form__error {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #BC5555;
+  display: none;
+}
+.main-form__error.is-visible {
+  display: block;
+}
+.main-form__input.is-invalid {
+  border-color: #BC5555;
+  color: #BC5555;
+}
+.main-form__input.is-invalid::placeholder {
+  color: #BC5555;
+}
 .main-form__input::placeholder {
   color: #818181;
 }
@@ -3223,6 +3239,25 @@ a:hover {
   height: 100%;
   opacity: 0;
   cursor: pointer;
+}
+.basket__files-summary {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #3873A9;
+}
+.basket__files-list {
+  margin-top: 8px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.basket__files-list li {
+  color: #1C1C1C;
+  font-size: 13px;
+  line-height: 18px;
+  word-break: break-word;
 }
 .basket__tooltip {
   position: relative;

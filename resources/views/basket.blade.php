@@ -36,28 +36,39 @@
           </div>
           <div class="basket__details basket__panel basket__panel--details">
             <h2 class="basket__details-title">Оформление заявки</h2>
-            <form class="basket__form" action="#" method="post" novalidate>
+            <form
+              class="basket__form"
+              action="{{ route('order-request.send') }}"
+              method="post"
+              enctype="multipart/form-data"
+              novalidate
+              data-basket-order-form
+            >
+              @csrf
               <div class="basket__field basket__field--full">
                 <div class="main-form__item">
                     <p class="main-form__name">Ваше имя <span style="color: #d83f3f;">*</span></p>
-                    <input type="text" class="header__search main-form__input" placeholder="Введите ФИО">
+                    <input type="text" name="name" class="header__search main-form__input" placeholder="Введите ФИО" required data-form-field="name" aria-invalid="false">
+                    <p class="main-form__error" data-form-error="name"></p>
                 </div>
               </div>
               <div class="basket__field">
                 <div class="main-form__item">
                     <p class="main-form__name">Ваше Email <span style="color: #d83f3f;">*</span></p>
-                    <input type="email" class="header__search main-form__input" placeholder="Введите Email">
+                    <input type="email" name="email" class="header__search main-form__input" placeholder="Введите Email" required data-form-field="email" aria-invalid="false">
+                    <p class="main-form__error" data-form-error="email"></p>
                 </div>
               </div>
               <div class="basket__field">
                 <div class="main-form__item">
                     <p class="main-form__name">Ваш телефон <span style="color: #d83f3f;">*</span></p>
-                    <input type="text" class="header__search main-form__input" placeholder="+7 (999) 999-99-99">
+                    <input type="tel" name="phone" class="header__search main-form__input" placeholder="+7 (...) ...-..-.." required data-form-field="phone" aria-invalid="false">
+                    <p class="main-form__error" data-form-error="phone"></p>
                 </div>
               </div>
               <div class="main-form__checkbox basket__field--full">
                     <div>
-                    <input type="checkbox">
+                    <input type="checkbox" data-basket-agreement required>
                     </div>
                     <p>Я соглашаюсь на <a href="#">обработку персональных данных</a></p>
                 </div>
@@ -81,17 +92,20 @@
                 <div class="basket__project-panel" data-basket-project-panel hidden>
                   <div class="main-form__item">
                         <p class="main-form__name">Описание проекта</p>
-                        <textarea class="header__search main-form__input main-form__textarea" placeholder="Введите описание проекта"></textarea>
+                        <textarea name="description" class="header__search main-form__input main-form__textarea" placeholder="Введите описание проекта"></textarea>
                     </div>
                   <div class="main-form__item">
                     <p class="main-form__name">Прикрепить файлы</p>
                     <label class="basket__dropzone" for="basket-files">
-                      <input class="basket__dropzone-input" id="basket-files" name="files" type="file" multiple>
-                      <span>Загрузите или перетащите файл с планом этажа, планом кровли, разрезы и сечения или прочие файлы (*прописать ограничения по размерам и форматам*)</span>
+                      <input class="basket__dropzone-input" id="basket-files" name="attachment[]" type="file" multiple data-basket-file-input>
+                      <span data-basket-files-placeholder>Загрузите или перетащите файл с планом этажа, планом кровли, разрезы и сечения или прочие файлы (*прописать ограничения по размерам и форматам*)</span>
                     </label>
+                    <p class="basket__files-summary" data-basket-files-summary hidden></p>
+                    <ul class="basket__files-list" data-basket-files-list hidden></ul>
                   </div>
                 </div>
               </div>
+              <p class="basket__form-message" data-basket-form-message hidden></p>
             </form>
           </div>
         </div>
@@ -248,4 +262,3 @@
   </script>
 </body>
 </html>
-

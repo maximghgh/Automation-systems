@@ -60,7 +60,11 @@ class OrderController extends Controller
             $keo = $validatedData['keoInfo'][0] ?? null;
         }
 
-        $storedAttachments = $this->storeAttachments($request->file('attachment'));
+        $storedAttachments = $this->storeAttachments(
+            $validatedData['attachment']
+                ?? $request->file('attachment')
+                ?? $request->file('files')
+        );
 
         [$emailType, $emailAddresses] = $this->resolveRecipients($request);
 
@@ -352,13 +356,17 @@ class OrderController extends Controller
         if (! $type) {
             $type = EmailType::query()
                 ->with('emails')
-                ->whereRaw('LOWER(type) = ?', ['order'])
+                ->where(function ($query) {
+                    $query
+                        ->whereRaw('LOWER(type) = ?', ['order'])
+                        ->orWhereRaw('LOWER(type) = ?', ['заявка']);
+                })
                 ->first();
         }
 
         if (! $type) {
             throw ValidationException::withMessages([
-                'email-type' => 'Тип заявки "order" не найден.',
+                'email-type' => 'Тип заявки "order" или "заявка" не найден.',
             ]);
         }
 
