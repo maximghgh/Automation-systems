@@ -23,6 +23,16 @@ Route::get('/about', [AboutPageController::class, 'show'])
 Route::view('/about-us', 'about_us')
     ->name('about.page');
 
+Route::view('/contact', 'contact')
+    ->name('contact.page');
+
+Route::view('/contact.html', 'contact');
+
+Route::get('/services', [ServicesController::class, 'index'])
+    ->name('services.index');
+
+Route::get('/services.html', [ServicesController::class, 'index']);
+
 // путь для страницы подробнее о услуги
 Route::get('/services/{service}', [ServicesController::class, 'show'])
     ->name('services.show');
@@ -49,6 +59,9 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 // Каталог
 
 // путь для страницы каталога + фильтры (бренды, категории, подкатегории)
+Route::view('/catalog.html', 'catalog')
+    ->name('catalog.page');
+
 Route::get('/catalog', [CatalogController::class, 'index'])
     ->name('catalog.index');
 
@@ -72,3 +85,4 @@ Route::post('/order-request', [OrderController::class, 'submitForm'])
 
 // путь на страницу корзины (только верстка)
 Route::view('/basket', 'basket')->name('basket');
+

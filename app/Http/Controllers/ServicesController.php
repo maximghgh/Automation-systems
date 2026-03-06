@@ -10,7 +10,7 @@ class ServicesController extends Controller
     function index()
     {
         $services = Services::query()
-            ->select('id', 'title', 'description')
+            ->select('id', 'title', 'description', 'image')
             ->orderByDesc('id')
             ->paginate(6);
 

@@ -3,65 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ $project->title }}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <title>&#1055;&#1086;&#1080;&#1089;&#1082; &#1087;&#1086; &#1089;&#1072;&#1081;&#1090;&#1091;</title>
   <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
 </head>
 <body>@include('components.header')
 
-  @php
-    $mediaUrl = static function ($path, $fallback = '') {
-      if (empty($path)) {
-        return $fallback;
-      }
-
-      if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])) {
-        return $path;
-      }
-
-      if (\Illuminate\Support\Str::startsWith($path, 'storage/')) {
-        return '/' . $path;
-      }
-
-      return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
-    };
-
-    $contentSource = trim((string) $project->content) !== ''
-      ? (string) $project->content
-      : (string) $project->description;
-
-    $contentHtml = trim($contentSource) !== ''
-      ? \Illuminate\Support\Str::markdown($contentSource)
-      : '<p></p>';
-  @endphp
-
   <main class="page">
-    <div class="card-project">
-      <div class="card__links">
-        <a class="card__link" href="{{ route('projects.index') }}">Проекты</a>
-        <div class="card__logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12.3583 9.40874L8.82501 5.8754C8.74754 5.7973 8.65538 5.7353 8.55383 5.693C8.45228 5.65069 8.34336 5.62891 8.23335 5.62891C8.12334 5.62891 8.01442 5.65069 7.91287 5.693C7.81132 5.7353 7.71915 5.7973 7.64168 5.8754C7.48647 6.03154 7.39935 6.24275 7.39935 6.4629C7.39935 6.68306 7.48647 6.89427 7.64168 7.0504L10.5917 10.0004L7.64168 12.9504C7.48647 13.1065 7.39935 13.3178 7.39935 13.5379C7.39935 13.7581 7.48647 13.9693 7.64168 14.1254C7.71955 14.2026 7.81189 14.2637 7.91342 14.3052C8.01496 14.3467 8.12367 14.3677 8.23335 14.3671C8.34302 14.3677 8.45174 14.3467 8.55327 14.3052C8.6548 14.2637 8.74715 14.2026 8.82501 14.1254L12.3583 10.5921C12.4365 10.5146 12.4984 10.4224 12.5408 10.3209C12.5831 10.2193 12.6048 10.1104 12.6048 10.0004C12.6048 9.89039 12.5831 9.78147 12.5408 9.67992C12.4984 9.57837 12.4365 9.48621 12.3583 9.40874Z" fill="black"/>
-          </svg>
-        </div>
-        <a class="card__link active" href="{{ route('projects.show', $project) }}">{{ $project->title }}</a>
+    <div class="search-page">
+      <div class="search-page__head">
+        <h1 class="main__title">&#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090;&#1099; &#1087;&#1086;&#1080;&#1089;&#1082;&#1072;</h1>
+        <p class="search-page__meta">
+          &#1055;&#1086; &#1079;&#1072;&#1087;&#1088;&#1086;&#1089;&#1091;:
+          <span class="search-page__query">{{ $query }}</span>
+        </p>
       </div>
 
-      <div class="card-project__content">
-        <div class="card-project__image">
-          <img src="{{ $mediaUrl($project->image, '/assets/6d77fe7c4a76248ddd7c01fd7a810ac36f81f17e.png') }}" alt="{{ $project->title }}">
+      @if($results->isEmpty())
+        <div class="main-empty-state">
+          <p class="main-empty-state__title">&#1053;&#1080;&#1095;&#1077;&#1075;&#1086; &#1085;&#1077; &#1085;&#1072;&#1081;&#1076;&#1077;&#1085;&#1086;</p>
+          <p class="main-empty-state__text">&#1055;&#1086;&#1087;&#1088;&#1086;&#1073;&#1091;&#1081;&#1090;&#1077; &#1080;&#1079;&#1084;&#1077;&#1085;&#1080;&#1090;&#1100; &#1079;&#1072;&#1087;&#1088;&#1086;&#1089;.</p>
         </div>
-        <p class="card-project__name">{{ $project->title }}</p>
-        <div class="card__editor">
-          {!! $contentHtml !!}
+      @else
+        <div class="search-page__list">
+          @foreach($results as $item)
+            @php
+              $resultUrl = (string) ($item['url'] ?? '#');
+              $resultTitle = trim((string) ($item['title'] ?? ''));
+              $resultType = '&#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090;';
+
+              if (\Illuminate\Support\Str::contains($resultUrl, '/services/')) {
+                  $resultType = '&#1059;&#1089;&#1083;&#1091;&#1075;&#1072;';
+              } elseif (\Illuminate\Support\Str::contains($resultUrl, '/projects/')) {
+                  $resultType = '&#1055;&#1088;&#1086;&#1077;&#1082;&#1090;';
+              } elseif (\Illuminate\Support\Str::contains($resultUrl, ['/catalog/', '/products/'])) {
+                  $resultType = '&#1058;&#1086;&#1074;&#1072;&#1088;';
+              }
+            @endphp
+
+            <a
+              class="search-page__result-link"
+              href="{{ $resultUrl }}"
+              data-search-result-link
+              data-search-result-title="{{ $resultTitle }}"
+              data-search-result-type="{!! $resultType !!}"
+            >
+              <span class="search-page__result-title">{{ $resultTitle }}</span>
+              <span class="search-page__result-type">{!! $resultType !!}</span>
+            </a>
+          @endforeach
         </div>
-      </div>
+      @endif
     </div>
   </main>
 
   @include('components.footer')
 
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="{{ asset('js/main.js') }}"></script>
   <script>
     (function () {
