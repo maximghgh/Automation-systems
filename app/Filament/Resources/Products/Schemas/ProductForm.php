@@ -22,8 +22,8 @@ class ProductForm
     {
         return $schema->schema([
             TextInput::make('title')
-                ->label('Загаловок')
-                ->placeholder('Загаловок')
+                ->label('Заголовок')
+                ->placeholder('Заголовок')
                 ->required()
                 ->maxLength(255)
                 ->afterStateUpdated(function (string $state, callable $set, callable $get) {

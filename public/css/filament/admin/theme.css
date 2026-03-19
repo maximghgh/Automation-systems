@@ -1,0 +1,96 @@
+@import '../filament/app.css';
+
+:root {
+    --site-accent: #3873A9;
+    --site-accent-hover: #224565;
+    --site-accent-soft: #afc7dd;
+}
+
+.fi:not(.dark) .fi-body {
+    background-color: #f5f5f6;
+}
+
+.fi-btn,
+.fi-icon-btn {
+    border-radius: 0.75rem;
+    transition-property: transform, box-shadow, background-color, border-color, color, opacity;
+    transition-duration: 0.28s;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fi-btn:not(.fi-disabled):not([disabled]):not(.fi-processing):hover,
+.fi-icon-btn:not(.fi-disabled):not([disabled]):hover {
+    transform: translateY(-1px);
+}
+
+.fi-btn:not(.fi-disabled):not([disabled]):not(.fi-processing):active,
+.fi-icon-btn:not(.fi-disabled):not([disabled]):active {
+    transform: translateY(0);
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):hover {
+    --hover-bg: var(--site-accent-hover);
+    --dark-hover-bg: var(--site-accent-hover);
+    --hover-text: #ffffff;
+    --dark-hover-text: #ffffff;
+    color: #ffffff;
+    box-shadow: 0 10px 18px rgba(34, 69, 101, 0.22);
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):active {
+    box-shadow: 0 4px 10px rgba(34, 69, 101, 0.18);
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):hover > .fi-icon,
+.fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-disabled):not([disabled]):focus-visible > .fi-icon {
+    color: #ffffff;
+}
+
+.fi-btn.fi-color-primary.fi-outlined:not(.fi-disabled):not([disabled]):hover {
+    background-color: rgba(56, 115, 169, 0.12);
+}
+
+.fi-icon-btn.fi-color-primary:not(.fi-disabled):not([disabled]):hover {
+    background-color: rgba(56, 115, 169, 0.12);
+    color: var(--site-accent-hover);
+}
+
+.fi-link.fi-color-primary {
+    transition: color 0.25s ease, text-decoration-color 0.25s ease;
+}
+
+.fi-link.fi-color-primary:not(.fi-disabled):not([disabled]):hover,
+.fi-link.fi-color-primary:not(.fi-disabled):not([disabled]):focus-visible {
+    color: var(--site-accent-hover);
+    text-decoration-color: currentColor;
+}
+
+/* Tailwind utility fallbacks for custom Filament blade pages without Vite theme build. */
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.5rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+/* Login: on invalid credentials, keep error text under password, but highlight email as invalid too. */
+.sa-login-field-force-invalid .fi-input-wrp {
+    --tw-ring-color: var(--danger-600);
+}
+
+.dark .sa-login-field-force-invalid .fi-input-wrp {
+    --tw-ring-color: var(--danger-500);
+}
+
+.sa-login-field-force-invalid .fi-input-wrp:focus-within {
+    --tw-ring-color: var(--danger-600);
+}
+
+.dark .sa-login-field-force-invalid .fi-input-wrp:focus-within {
+    --tw-ring-color: var(--danger-500);
+}

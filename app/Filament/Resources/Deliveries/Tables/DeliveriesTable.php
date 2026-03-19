@@ -16,7 +16,7 @@ class DeliveriesTable
     {
         return $table
             ->columns([
-                TextColumn::make('title')->label('Загаловок'),
+                TextColumn::make('title')->label('Заголовок'),
                 TextColumn::make('description')->label('Описание'),
                 ImageColumn::make('icon')
                     ->label('Изображение')
