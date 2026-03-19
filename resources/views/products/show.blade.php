@@ -10,7 +10,7 @@
 <body>@include('components.header')
 
   @php
-    $product->loadMissing(['brand', 'categories', 'tabs']);
+    $product->loadMissing(['brand', 'category', 'subcategory.category', 'tabs']);
 
     $mediaUrl = static function ($path, $fallback = '') {
       if (empty($path)) {
@@ -57,7 +57,9 @@
       ]);
     }
 
-    $categoryNames = $product->categories->pluck('name')->filter()->implode(', ');
+    $categoryName = $product->category?->name
+      ?? $product->subcategory?->category?->name
+      ?? '';
   @endphp
 
   <main class="page">
@@ -69,7 +71,7 @@
       data-cart-product-title="{{ $product->title }}"
       data-cart-product-image="{{ $mediaUrl($product->image, '/assets/3e1e96143a03aff456fb2666bef78ffa11f15f5d.jpg') }}"
       data-cart-product-brand="{{ $product->brand?->name ?? '' }}"
-      data-cart-product-category="{{ $categoryNames }}"
+      data-cart-product-category="{{ $categoryName }}"
     >
       <div class="card__links">
         <a class="card__link" href="/">Каталог</a>
@@ -96,7 +98,7 @@
             <div class="card__param">
               <span class="card__param-name">Категория</span>
               <span class="card__param-dots" aria-hidden="true"></span>
-              <span class="card__param-value">{{ $categoryNames !== '' ? $categoryNames : '-' }}</span>
+              <span class="card__param-value">{{ $categoryName !== '' ? $categoryName : '-' }}</span>
             </div>
           </div>
           <div class="card__price">

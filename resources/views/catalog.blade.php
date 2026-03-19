@@ -300,14 +300,18 @@
         categories: new Set(),
         subcategories: new Set(),
         expandedCategories: new Set(),
-        expandedSubcategories: new Set()
+        expandedSubcategories: new Set(),
+        page: 1
       };
 
+      var itemsPerPage = 12;
       var requestToken = 0;
       var cachedBrands = [];
       var cachedCategories = [];
       var cachedProducts = [];
       var cachedTreeProducts = [];
+      var cachedProductsEmptyTitle = null;
+      var cachedProductsEmptyText = null;
 
       function normalizeMediaPath(path) {
         if (!path || typeof path !== "string") {
@@ -444,6 +448,9 @@
         }
         if (subcategoryIds.length) {
           params.set("subcategories", subcategoryIds.join(","));
+        }
+        if (state.page > 1) {
+          params.set("page", String(state.page));
         }
 
         var nextUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
@@ -603,23 +610,33 @@
         });
       }
 
-      function renderPagination(productsCount) {
+      function renderPagination(totalPages) {
         paginationRoot.innerHTML = "";
-        paginationRoot.hidden = productsCount <= 0;
+        paginationRoot.hidden = totalPages <= 1;
 
-        if (productsCount <= 0) {
+        if (totalPages <= 1) {
           return;
         }
 
-        var pageNode = document.createElement("div");
-        pageNode.className = "catalog__pagination-item active";
-        pageNode.textContent = "1";
-        paginationRoot.appendChild(pageNode);
+        for (var page = 1; page <= totalPages; page += 1) {
+          var pageNode = document.createElement("div");
+          pageNode.className = "catalog__pagination-item";
+          pageNode.classList.toggle("active", page === state.page);
+          pageNode.textContent = String(page);
+          pageNode.setAttribute("role", "button");
+          pageNode.setAttribute("tabindex", "0");
+          pageNode.setAttribute("data-page", String(page));
+          pageNode.setAttribute("aria-current", page === state.page ? "page" : "false");
+          paginationRoot.appendChild(pageNode);
+        }
       }
 
       function renderProducts(products, emptyTitle, emptyText) {
         productsRoot.innerHTML = "";
-        var list = Array.isArray(products) ? products : [];
+        cachedProducts = Array.isArray(products) ? products : [];
+        cachedProductsEmptyTitle = emptyTitle || null;
+        cachedProductsEmptyText = emptyText || null;
+        var list = cachedProducts;
 
         if (!list.length) {
           productsRoot.appendChild(
@@ -632,7 +649,20 @@
           return;
         }
 
-        list.forEach(function (product) {
+        var totalPages = Math.max(1, Math.ceil(list.length / itemsPerPage));
+
+        if (!(state.page > 0)) {
+          state.page = 1;
+        }
+
+        if (state.page > totalPages) {
+          state.page = totalPages;
+        }
+
+        var startIndex = (state.page - 1) * itemsPerPage;
+        var pagedProducts = list.slice(startIndex, startIndex + itemsPerPage);
+
+        pagedProducts.forEach(function (product) {
           var title = typeof product.title === "string" && product.title.trim().length ? product.title.trim() : "Товар";
           var description = "";
           if (typeof product.short_description === "string" && product.short_description.trim().length) {
@@ -684,7 +714,7 @@
           productsRoot.appendChild(item);
         });
 
-        renderPagination(list.length);
+        renderPagination(totalPages);
       }
 
       function buildRequestUrl() {
@@ -701,6 +731,9 @@
         }
         if (subcategoryIds.length) {
           url.searchParams.set("subcategories", subcategoryIds.join(","));
+        }
+        if (state.page > 1) {
+          url.searchParams.set("page", String(state.page));
         }
 
         return url.toString();
@@ -791,6 +824,7 @@
         }
 
         toggleSetValue(state.brands, brandId);
+        state.page = 1;
         fetchCatalogData();
       }
 
@@ -801,6 +835,7 @@
         }
 
         toggleSetValue(state.categories, categoryId);
+        state.page = 1;
         fetchCatalogData();
       }
 
@@ -811,6 +846,7 @@
         }
 
         toggleSetValue(state.subcategories, subcategoryId);
+        state.page = 1;
         fetchCatalogData();
       }
 
@@ -950,6 +986,38 @@
         });
       });
 
+      function handlePageChange(pageNode) {
+        var nextPage = Number(pageNode && pageNode.getAttribute("data-page"));
+
+        if (!(nextPage > 0) || nextPage === state.page) {
+          return;
+        }
+
+        state.page = nextPage;
+        renderProducts(cachedProducts, cachedProductsEmptyTitle, cachedProductsEmptyText);
+        syncUrl();
+      }
+
+      paginationRoot.addEventListener("click", function (event) {
+        var pageNode = event.target.closest("[data-page]");
+        if (!pageNode) {
+          return;
+        }
+
+        handlePageChange(pageNode);
+      });
+
+      paginationRoot.addEventListener("keydown", function (event) {
+        var pageNode = event.target.closest("[data-page]");
+        if (!pageNode) {
+          return;
+        }
+
+        handleKeyboardAction(event, function () {
+          handlePageChange(pageNode);
+        });
+      });
+
       if (resetLink) {
         resetLink.addEventListener("click", function (event) {
           event.preventDefault();
@@ -959,6 +1027,7 @@
           state.subcategories.clear();
           state.expandedCategories.clear();
           state.expandedSubcategories.clear();
+          state.page = 1;
           syncTabUi();
           fetchCatalogData();
         });
@@ -970,6 +1039,7 @@
         state.brands = setFromArray(parseIdsFromQuery(params, "brands"));
         state.categories = setFromArray(parseIdsFromQuery(params, "categories"));
         state.subcategories = setFromArray(parseIdsFromQuery(params, "subcategories"));
+        state.page = Math.max(1, Number(params.get("page")) || 1);
 
         if (state.categories.size || state.subcategories.size) {
           state.tab = "categories";

@@ -2117,6 +2117,13 @@ a:hover {
   color: #1c1c1c;
   font-weight: 500;
 }
+.catalog__pagination-item[role=button] {
+  cursor: pointer;
+}
+.catalog__pagination-item[role=button]:focus-visible {
+  outline: 2px solid #3873A9;
+  outline-offset: 2px;
+}
 .catalog__pagination-item.active {
   background-color: #3873A9;
   color: #ffffff;
