@@ -299,12 +299,15 @@
         brands: new Set(),
         categories: new Set(),
         subcategories: new Set(),
-        expandedCategories: new Set()
+        expandedCategories: new Set(),
+        expandedSubcategories: new Set()
       };
 
       var requestToken = 0;
       var cachedBrands = [];
       var cachedCategories = [];
+      var cachedProducts = [];
+      var cachedTreeProducts = [];
 
       function normalizeMediaPath(path) {
         if (!path || typeof path !== "string") {
@@ -360,6 +363,39 @@
 
       function getArrowIconMarkup() {
         return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M14.1666 7.64174C14.0104 7.48653 13.7992 7.39941 13.5791 7.39941C13.3589 7.39941 13.1477 7.48653 12.9916 7.64174L9.99992 10.5917L7.04992 7.64174C6.89378 7.48653 6.68257 7.39941 6.46242 7.39941C6.24226 7.39941 6.03105 7.48653 5.87492 7.64174C5.79681 7.71921 5.73481 7.81138 5.69251 7.91293C5.6502 8.01448 5.62842 8.1234 5.62842 8.23341C5.62842 8.34342 5.6502 8.45234 5.69251 8.55389C5.73481 8.65544 5.79681 8.74761 5.87492 8.82507L9.40825 12.3584C9.48572 12.4365 9.57789 12.4985 9.67944 12.5408C9.78099 12.5831 9.88991 12.6049 9.99992 12.6049C10.1099 12.6049 10.2188 12.5831 10.3204 12.5408C10.4219 12.4985 10.5141 12.4365 10.5916 12.3584L14.1666 8.82507C14.2447 8.74761 14.3067 8.65544 14.349 8.55389C14.3913 8.45234 14.4131 8.34342 14.4131 8.23341C14.4131 8.1234 14.3913 8.01448 14.349 7.91293C14.3067 7.81138 14.2447 7.71921 14.1666 7.64174Z" fill="#224565"/></svg>';
+      }
+
+      function buildProductsBySubcategory(products) {
+        var grouped = {};
+        (Array.isArray(products) ? products : []).forEach(function (product) {
+          var subcategoryId = Number(product && product.subcategory && product.subcategory.id);
+          var productId = Number(product && product.id);
+          if (!(subcategoryId > 0) || !(productId > 0)) {
+            return;
+          }
+
+          if (!grouped[subcategoryId]) {
+            grouped[subcategoryId] = [];
+          }
+
+          if (grouped[subcategoryId].some(function (item) { return Number(item && item.id) === productId; })) {
+            return;
+          }
+
+          grouped[subcategoryId].push({
+            id: productId,
+            title: typeof product.title === "string" ? product.title : "",
+            slug: typeof product.slug === "string" ? product.slug : ""
+          });
+        });
+
+        Object.keys(grouped).forEach(function (subcategoryId) {
+          grouped[subcategoryId].sort(function (left, right) {
+            return String(left.title || "").localeCompare(String(right.title || ""));
+          });
+        });
+
+        return grouped;
       }
 
       function createEmptyState(title, text, modifierClass) {
@@ -457,6 +493,7 @@
       function renderCategories(categories) {
         categoriesRoot.innerHTML = "";
         cachedCategories = Array.isArray(categories) ? categories : [];
+        var productsBySubcategory = buildProductsBySubcategory(cachedTreeProducts);
 
         if (!cachedCategories.length) {
           categoriesRoot.appendChild(createEmptyState("Нет категорий", "Список категорий скоро появится.", "catalog__empty--filter"));
@@ -468,14 +505,7 @@
           var categoryName = typeof category.name === "string" && category.name.trim().length ? category.name.trim() : "Категория";
           var subcategories = Array.isArray(category.subcategories) ? category.subcategories : [];
           var hasSubcategories = subcategories.length > 0;
-          var hasSelectedSubcategories = subcategories.some(function (subcategory) {
-            return state.subcategories.has(Number(subcategory && subcategory.id));
-          });
-          var isExpanded = state.expandedCategories.has(categoryId) || state.categories.has(categoryId) || hasSelectedSubcategories;
-
-          if (isExpanded) {
-            state.expandedCategories.add(categoryId);
-          }
+          var isExpanded = state.expandedCategories.has(categoryId);
 
           var container = document.createElement("div");
           container.className = "catalog__category-container";
@@ -507,26 +537,66 @@
           container.appendChild(item);
 
           if (hasSubcategories) {
-            var subcategoriesNode = document.createElement("div");
-            subcategoriesNode.className = "catalog__category-prod";
-
             subcategories.forEach(function (subcategory) {
               var subcategoryId = Number(subcategory && subcategory.id);
               var subcategoryName = typeof subcategory.name === "string" && subcategory.name.trim().length ? subcategory.name.trim() : "Подкатегория";
+              var subcategoryProducts = productsBySubcategory[subcategoryId] || [];
+              var isSubcategoryExpanded = state.expandedSubcategories.has(subcategoryId);
 
-              var linkNode = document.createElement("a");
-              linkNode.href = "#";
-              linkNode.setAttribute("role", "button");
-              linkNode.setAttribute("tabindex", "0");
-              linkNode.setAttribute("data-subcategory-id", String(subcategoryId));
-              linkNode.textContent = subcategoryName;
-              linkNode.classList.toggle("active", state.subcategories.has(subcategoryId));
-              linkNode.setAttribute("aria-pressed", String(state.subcategories.has(subcategoryId)));
+              var subcategoryNode = document.createElement("div");
+              subcategoryNode.className = "catalog__category-item catalog__category-sub";
+              subcategoryNode.classList.toggle("active", state.subcategories.has(subcategoryId));
+              subcategoryNode.setAttribute("role", "button");
+              subcategoryNode.setAttribute("tabindex", "0");
+              subcategoryNode.setAttribute("data-subcategory-id", String(subcategoryId));
+              subcategoryNode.setAttribute("aria-pressed", String(state.subcategories.has(subcategoryId)));
+              subcategoryNode.style.display = isExpanded ? "" : "none";
 
-              subcategoriesNode.appendChild(linkNode);
+              var subcategoryNameNode = document.createElement("p");
+              subcategoryNameNode.className = "catalog__category-name";
+              subcategoryNameNode.textContent = subcategoryName;
+
+              var subcategoryIconNode = document.createElement("div");
+              subcategoryIconNode.className = "catalog__category-icon";
+              subcategoryIconNode.classList.toggle("active", subcategoryProducts.length > 0 && isSubcategoryExpanded);
+              subcategoryIconNode.innerHTML = getArrowIconMarkup();
+              if (subcategoryProducts.length > 0) {
+                subcategoryIconNode.setAttribute("data-subcategory-toggle", String(subcategoryId));
+              }
+
+              subcategoryNode.appendChild(subcategoryNameNode);
+              subcategoryNode.appendChild(subcategoryIconNode);
+              container.appendChild(subcategoryNode);
+
+              if (!subcategoryProducts.length) {
+                return;
+              }
+
+              var productsNode = document.createElement("div");
+              productsNode.className = "catalog__category-prod";
+              productsNode.style.display = isExpanded && isSubcategoryExpanded ? "" : "none";
+
+              subcategoryProducts.forEach(function (subcategoryProduct) {
+                var subcategoryProductTitle = typeof subcategoryProduct.title === "string" && subcategoryProduct.title.trim().length
+                  ? subcategoryProduct.title.trim()
+                  : "Product";
+                var subcategoryProductSlug = typeof subcategoryProduct.slug === "string"
+                  ? subcategoryProduct.slug.trim()
+                  : "";
+                var subcategoryProductUrl = subcategoryProductSlug.length
+                  ? productRouteTemplate.replace("__product__", encodeURIComponent(subcategoryProductSlug))
+                  : "#";
+
+                var productLinkNode = document.createElement("a");
+                productLinkNode.href = subcategoryProductUrl;
+                productLinkNode.setAttribute("role", "button");
+                productLinkNode.setAttribute("tabindex", "0");
+                productLinkNode.textContent = subcategoryProductTitle;
+                productsNode.appendChild(productLinkNode);
+              });
+
+              container.appendChild(productsNode);
             });
-
-            container.appendChild(subcategoriesNode);
           }
 
           categoriesRoot.appendChild(container);
@@ -657,6 +727,8 @@
             }
             return true;
           });
+          cachedTreeProducts = localProducts;
+          cachedProducts = filteredProducts;
           renderBrands(localFilters.brands || []);
           renderCategories(localFilters.categories || []);
           renderProducts(filteredProducts);
@@ -684,9 +756,11 @@
             state.brands = setFromArray(selected.brands);
             state.categories = setFromArray(selected.categories);
             state.subcategories = setFromArray(selected.subcategories);
+            cachedTreeProducts = Array.isArray(payload && payload.products) ? payload.products : [];
+            cachedProducts = Array.isArray(payload && payload.products) ? payload.products : [];
             renderBrands(filters.brands || []);
             renderCategories(filters.categories || []);
-            renderProducts(payload && payload.products ? payload.products : []);
+            renderProducts(cachedProducts);
             syncTabUi();
             syncUrl();
           })
@@ -694,6 +768,8 @@
             if (currentToken !== requestToken) {
               return;
             }
+            cachedTreeProducts = [];
+            cachedProducts = [];
             renderProducts([], "Catalog load failed", "Please refresh and try again.");
             renderBrands([]);
             renderCategories([]);
@@ -725,9 +801,6 @@
         }
 
         toggleSetValue(state.categories, categoryId);
-        if (state.categories.has(categoryId)) {
-          state.expandedCategories.add(categoryId);
-        }
         fetchCatalogData();
       }
 
@@ -748,6 +821,17 @@
         }
 
         toggleSetValue(state.expandedCategories, categoryId);
+        renderCategories(cachedCategories);
+        syncUrl();
+      }
+
+      function handleSubcategoryExpandToggle(toggleNode) {
+        var subcategoryId = Number(toggleNode.getAttribute("data-subcategory-toggle"));
+        if (!(subcategoryId > 0)) {
+          return;
+        }
+
+        toggleSetValue(state.expandedSubcategories, subcategoryId);
         renderCategories(cachedCategories);
         syncUrl();
       }
@@ -800,17 +884,26 @@
       });
 
       categoriesRoot.addEventListener("click", function (event) {
+        var subcategoryToggleNode = event.target.closest("[data-subcategory-toggle]");
+        if (subcategoryToggleNode) {
+          event.preventDefault();
+          event.stopPropagation();
+          handleSubcategoryExpandToggle(subcategoryToggleNode);
+          return;
+        }
+
+        var categoryToggleNode = event.target.closest("[data-category-toggle]");
+        if (categoryToggleNode) {
+          event.preventDefault();
+          event.stopPropagation();
+          handleExpandToggle(categoryToggleNode);
+          return;
+        }
+
         var subcategoryNode = event.target.closest("[data-subcategory-id]");
         if (subcategoryNode) {
           event.preventDefault();
           handleSubcategoryToggle(subcategoryNode);
-          return;
-        }
-
-        var toggleNode = event.target.closest("[data-category-toggle]");
-        if (toggleNode) {
-          event.preventDefault();
-          handleExpandToggle(toggleNode);
           return;
         }
 
@@ -823,18 +916,26 @@
       });
 
       categoriesRoot.addEventListener("keydown", function (event) {
-        var subcategoryNode = event.target.closest("[data-subcategory-id]");
-        if (subcategoryNode) {
+        var subcategoryToggleNode = event.target.closest("[data-subcategory-toggle]");
+        if (subcategoryToggleNode) {
           handleKeyboardAction(event, function () {
-            handleSubcategoryToggle(subcategoryNode);
+            handleSubcategoryExpandToggle(subcategoryToggleNode);
           });
           return;
         }
 
-        var toggleNode = event.target.closest("[data-category-toggle]");
-        if (toggleNode) {
+        var categoryToggleNode = event.target.closest("[data-category-toggle]");
+        if (categoryToggleNode) {
           handleKeyboardAction(event, function () {
-            handleExpandToggle(toggleNode);
+            handleExpandToggle(categoryToggleNode);
+          });
+          return;
+        }
+
+        var subcategoryNode = event.target.closest("[data-subcategory-id]");
+        if (subcategoryNode) {
+          handleKeyboardAction(event, function () {
+            handleSubcategoryToggle(subcategoryNode);
           });
           return;
         }
@@ -857,6 +958,7 @@
           state.categories.clear();
           state.subcategories.clear();
           state.expandedCategories.clear();
+          state.expandedSubcategories.clear();
           syncTabUi();
           fetchCatalogData();
         });
