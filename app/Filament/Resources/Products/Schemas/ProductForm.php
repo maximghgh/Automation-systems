@@ -125,7 +125,6 @@ class ProductForm
 
             $categoryExists = Category::query()
                 ->whereKey($categoryId)
-                ->doesntHave('subcategories')
                 ->exists();
 
             if ($categoryExists) {
@@ -169,10 +168,7 @@ class ProductForm
         $options = [];
 
         foreach ($categories as $category) {
-            if ($category->subcategories->isEmpty()) {
-                $options['category:' . $category->id] = $category->name;
-                continue;
-            }
+            $options['category:' . $category->id] = $category->name;
 
             foreach ($category->subcategories as $subcategory) {
                 $options['subcategory:' . $subcategory->id] = $category->name . ' / ' . $subcategory->name;
