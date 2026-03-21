@@ -1737,6 +1737,7 @@
     var qtyRoot = productCard.querySelector("[data-qty]");
     var qtyNode = productCard.querySelector("[data-qty-value]");
     var minusButton = qtyRoot ? qtyRoot.querySelector("[data-qty-action='decrease']") : null;
+    var selectedMin = qtyRoot ? Math.max(1, toInt(qtyRoot.getAttribute("data-qty-min"), 1)) : 1;
     var labelAdd = toString(addButton.getAttribute("data-cart-label-add")) || "\u0412 \u0441\u0447\u0435\u0442";
     var labelInCart = toString(addButton.getAttribute("data-cart-label-in")) || "\u0412 \u043a\u043e\u0440\u0437\u0438\u043d\u0435";
     var productItem = {
@@ -1750,15 +1751,15 @@
     var productKey = normalizeItem(productItem).key;
 
     function getSelectedQty() {
-      var rawValue = qtyNode ? qtyNode.textContent : "1";
-      return Math.max(0, toInt(rawValue, 1));
+      var rawValue = qtyNode ? qtyNode.textContent : String(selectedMin);
+      return Math.max(selectedMin, toInt(rawValue, selectedMin));
     }
 
     function setSelectedQty(nextQty) {
       if (!qtyNode) {
         return;
       }
-      qtyNode.textContent = String(Math.max(0, toInt(nextQty, 0)));
+      qtyNode.textContent = String(Math.max(selectedMin, toInt(nextQty, selectedMin)));
     }
 
     function syncMinusState() {
@@ -1766,12 +1767,7 @@
         return;
       }
 
-      var min = 0;
-      if (qtyRoot) {
-        min = Math.max(0, toInt(qtyRoot.getAttribute("data-qty-min"), 0));
-      }
-
-      var isDisabled = getSelectedQty() <= min;
+      var isDisabled = getSelectedQty() <= selectedMin;
       minusButton.classList.toggle("is-disabled", isDisabled);
       minusButton.setAttribute("aria-disabled", isDisabled ? "true" : "false");
     }
@@ -1802,13 +1798,6 @@
       }
 
       var qty = getSelectedQty();
-      if (qty <= 0) {
-        removeFromCart(productKey);
-        addButton.textContent = labelAdd;
-        syncMinusState();
-        return;
-      }
-
       addToCart(productItem, qty);
 
       addButton.textContent = labelInCart;
@@ -1829,14 +1818,7 @@
           }
 
           var qty = getSelectedQty();
-          if (qty <= 0) {
-            removeFromCart(productKey);
-            addButton.textContent = labelAdd;
-            syncMinusState();
-            return;
-          }
-
-          setQty(productKey, qty);
+          setQty(productKey, Math.max(selectedMin, qty));
           addButton.textContent = labelInCart;
         }, 0);
       });

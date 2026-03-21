@@ -106,7 +106,7 @@
               Цена по запросу
             </p>
             <div class="card__price-btns">
-              <div class="card__price-number" data-qty data-qty-min="0" data-qty-initial="1">
+              <div class="card__price-number" data-qty data-qty-min="1" data-qty-initial="1">
                 <button class="card__price-item btn card__qty-btn card__qty-btn--minus is-disabled" type="button" data-qty-action="decrease" aria-label="Decrease quantity" aria-disabled="true">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M15.8334 9.16699H4.16671C3.94569 9.16699 3.73373 9.25479 3.57745 9.41107C3.42117 9.56735 3.33337 9.77931 3.33337 10.0003C3.33337 10.2213 3.42117 10.4333 3.57745 10.5896C3.73373 10.7459 3.94569 10.8337 4.16671 10.8337H15.8334C16.0544 10.8337 16.2663 10.7459 16.4226 10.5896C16.5789 10.4333 16.6667 10.2213 16.6667 10.0003C16.6667 9.77931 16.5789 9.56735 16.4226 9.41107C16.2663 9.25479 16.0544 9.16699 15.8334 9.16699Z" fill="#D6D6D9"/>

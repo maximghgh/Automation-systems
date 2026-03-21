@@ -4,13 +4,17 @@
 }
 *,
 *::before,
-*::after,
-*::placeholder {
+*::after {
   box-sizing: border-box;
   font-weight: 500;
   letter-spacing: 0.8px;
   margin: 0;
   padding: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+*::placeholder {
+  font-weight: 400;
 }
 
 body {
@@ -58,7 +62,10 @@ a:hover {
 .header {
   display: flex;
   flex-direction: column;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: #ffffff;
 }
 .header__head-container {
   background-color: #3873A9;
@@ -334,12 +341,20 @@ a:hover {
   color: #3873A9;
   line-height: 20px;
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 .header__basket-icon {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+.header__basket-icon svg path {
+  fill: currentColor;
+  transition: fill 0.2s ease;
+}
+.header__basket p {
+  transition: color 0.2s ease;
 }
 .header__basket-count {
   position: absolute;
@@ -361,6 +376,16 @@ a:hover {
 }
 .header__basket:hover {
   text-decoration: none;
+}
+.header__basket:hover,
+.header__basket:focus-visible {
+  color: #224565;
+  text-decoration: none;
+}
+.header__basket:focus-visible {
+  outline: 2px solid #3873A9;
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 .header__social {
   display: flex;
@@ -2104,8 +2129,12 @@ a:hover {
 .catalog__pagination {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .catalog__pagination-item {
+  min-width: 32px;
   width: 32px;
   height: 32px;
   display: flex;
@@ -2116,13 +2145,33 @@ a:hover {
   line-height: 20px;
   color: #1c1c1c;
   font-weight: 500;
+  user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+.catalog__pagination-item--arrow {
+  color: #3873A9;
 }
 .catalog__pagination-item[role=button] {
   cursor: pointer;
 }
+.catalog__pagination-item[role=button]:not(.active):hover {
+  background-color: #F0F6FC;
+  color: #3873A9;
+}
 .catalog__pagination-item[role=button]:focus-visible {
   outline: 2px solid #3873A9;
   outline-offset: 2px;
+}
+.catalog__pagination-item svg {
+  width: 24px;
+  height: 24px;
+}
+.catalog__pagination-item--ellipsis {
+  cursor: default;
+}
+.catalog__pagination-item--disabled {
+  color: #1c1c1c;
+  pointer-events: none;
 }
 .catalog__pagination-item.active {
   background-color: #3873A9;

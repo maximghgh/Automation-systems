@@ -402,6 +402,40 @@
         return grouped;
       }
 
+      function buildDirectProductsByCategory(products) {
+        var grouped = {};
+        (Array.isArray(products) ? products : []).forEach(function (product) {
+          var categoryId = Number(product && product.category && product.category.id);
+          var subcategoryId = Number(product && product.subcategory && product.subcategory.id);
+          var productId = Number(product && product.id);
+          if (!(categoryId > 0) || subcategoryId > 0 || !(productId > 0)) {
+            return;
+          }
+
+          if (!grouped[categoryId]) {
+            grouped[categoryId] = [];
+          }
+
+          if (grouped[categoryId].some(function (item) { return Number(item && item.id) === productId; })) {
+            return;
+          }
+
+          grouped[categoryId].push({
+            id: productId,
+            title: typeof product.title === "string" ? product.title : "",
+            slug: typeof product.slug === "string" ? product.slug : ""
+          });
+        });
+
+        Object.keys(grouped).forEach(function (categoryId) {
+          grouped[categoryId].sort(function (left, right) {
+            return String(left.title || "").localeCompare(String(right.title || ""));
+          });
+        });
+
+        return grouped;
+      }
+
       function createEmptyState(title, text, modifierClass) {
         var box = document.createElement("div");
         box.className = "catalog__empty" + (modifierClass ? " " + modifierClass : "");
@@ -501,6 +535,7 @@
         categoriesRoot.innerHTML = "";
         cachedCategories = Array.isArray(categories) ? categories : [];
         var productsBySubcategory = buildProductsBySubcategory(cachedTreeProducts);
+        var directProductsByCategory = buildDirectProductsByCategory(cachedTreeProducts);
 
         if (!cachedCategories.length) {
           categoriesRoot.appendChild(createEmptyState("Нет категорий", "Список категорий скоро появится.", "catalog__empty--filter"));
@@ -511,7 +546,9 @@
           var categoryId = Number(category && category.id);
           var categoryName = typeof category.name === "string" && category.name.trim().length ? category.name.trim() : "Категория";
           var subcategories = Array.isArray(category.subcategories) ? category.subcategories : [];
+          var directCategoryProducts = directProductsByCategory[categoryId] || [];
           var hasSubcategories = subcategories.length > 0;
+          var hasCategoryChildren = hasSubcategories || directCategoryProducts.length > 0;
           var isExpanded = state.expandedCategories.has(categoryId);
 
           var container = document.createElement("div");
@@ -535,7 +572,7 @@
           iconNode.className = "catalog__category-icon";
           iconNode.classList.toggle("active", isExpanded);
           iconNode.innerHTML = getArrowIconMarkup();
-          if (hasSubcategories) {
+          if (hasCategoryChildren) {
             iconNode.setAttribute("data-category-toggle", String(categoryId));
           }
 
@@ -606,8 +643,90 @@
             });
           }
 
+          if (directCategoryProducts.length) {
+            var directProductsNode = document.createElement("div");
+            directProductsNode.className = "catalog__category-prod";
+            directProductsNode.style.paddingLeft = "12px";
+            directProductsNode.style.display = isExpanded ? "" : "none";
+
+            directCategoryProducts.forEach(function (directCategoryProduct) {
+              var directCategoryProductTitle = typeof directCategoryProduct.title === "string" && directCategoryProduct.title.trim().length
+                ? directCategoryProduct.title.trim()
+                : "Product";
+              var directCategoryProductSlug = typeof directCategoryProduct.slug === "string"
+                ? directCategoryProduct.slug.trim()
+                : "";
+              var directCategoryProductUrl = directCategoryProductSlug.length
+                ? productRouteTemplate.replace("__product__", encodeURIComponent(directCategoryProductSlug))
+                : "#";
+
+              var directProductLinkNode = document.createElement("a");
+              directProductLinkNode.href = directCategoryProductUrl;
+              directProductLinkNode.setAttribute("role", "button");
+              directProductLinkNode.setAttribute("tabindex", "0");
+              directProductLinkNode.textContent = directCategoryProductTitle;
+              directProductsNode.appendChild(directProductLinkNode);
+            });
+
+            container.appendChild(directProductsNode);
+          }
+
           categoriesRoot.appendChild(container);
         });
+      }
+
+      function getPaginationArrowIconMarkup(direction) {
+        var transform = direction === "next" ? ' transform="rotate(180 12 12)"' : "";
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11.2899 11.9997L14.8299 8.4597C15.0162 8.27234 15.1207 8.01889 15.1207 7.7547C15.1207 7.49052 15.0162 7.23707 14.8299 7.0497C14.737 6.95598 14.6264 6.88158 14.5045 6.83081C14.3827 6.78004 14.252 6.75391 14.1199 6.75391C13.9879 6.75391 13.8572 6.78004 13.7354 6.83081C13.6135 6.88158 13.5029 6.95598 13.4099 7.0497L9.16994 11.2897C9.07622 11.3827 9.00182 11.4933 8.95105 11.6151C8.90028 11.737 8.87415 11.8677 8.87415 11.9997C8.87415 12.1317 8.90028 12.2624 8.95105 12.3843C9.00182 12.5061 9.07622 12.6167 9.16994 12.7097L13.4099 16.9997C13.5034 17.0924 13.6142 17.1657 13.736 17.2155C13.8579 17.2652 13.9883 17.2905 14.1199 17.2897C14.2516 17.2905 14.382 17.2652 14.5038 17.2155C14.6257 17.1657 14.7365 17.0924 14.8299 16.9997C15.0162 16.8123 15.1207 16.5589 15.1207 16.2947C15.1207 16.0305 15.0162 15.7771 14.8299 15.5897L11.2899 11.9997Z" fill="currentColor"' + transform + "/></svg>";
+      }
+
+      function getPaginationItems(totalPages, currentPage) {
+        var pages = [];
+
+        if (totalPages <= 7) {
+          for (var page = 1; page <= totalPages; page += 1) {
+            pages.push(page);
+          }
+
+          return pages;
+        }
+
+        if (currentPage <= 4) {
+          return [1, 2, 3, 4, 5, "ellipsis", totalPages];
+        }
+
+        if (currentPage >= totalPages - 3) {
+          return [1, "ellipsis", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        }
+
+        return [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages];
+      }
+
+      function createPaginationItem(content, className, useHtml) {
+        var item = document.createElement("div");
+        item.className = "catalog__pagination-item" + (className ? " " + className : "");
+
+        if (useHtml) {
+          item.innerHTML = content;
+        } else {
+          item.textContent = String(content);
+        }
+
+        return item;
+      }
+
+      function setPaginationTarget(item, page, label) {
+        if (!(page > 0)) {
+          return;
+        }
+
+        item.setAttribute("role", "button");
+        item.setAttribute("tabindex", "0");
+        item.setAttribute("data-page", String(page));
+
+        if (label) {
+          item.setAttribute("aria-label", label);
+        }
       }
 
       function renderPagination(totalPages) {
@@ -618,17 +737,48 @@
           return;
         }
 
-        for (var page = 1; page <= totalPages; page += 1) {
-          var pageNode = document.createElement("div");
-          pageNode.className = "catalog__pagination-item";
-          pageNode.classList.toggle("active", page === state.page);
-          pageNode.textContent = String(page);
-          pageNode.setAttribute("role", "button");
-          pageNode.setAttribute("tabindex", "0");
-          pageNode.setAttribute("data-page", String(page));
-          pageNode.setAttribute("aria-current", page === state.page ? "page" : "false");
-          paginationRoot.appendChild(pageNode);
+        var previousNode = createPaginationItem(
+          getPaginationArrowIconMarkup("prev"),
+          "catalog__pagination-item--arrow" + (state.page <= 1 ? " catalog__pagination-item--disabled" : ""),
+          true
+        );
+        if (state.page > 1) {
+          setPaginationTarget(previousNode, state.page - 1, "Previous page");
+        } else {
+          previousNode.setAttribute("aria-disabled", "true");
         }
+        paginationRoot.appendChild(previousNode);
+
+        getPaginationItems(totalPages, state.page).forEach(function (page) {
+          if (page === "ellipsis") {
+            paginationRoot.appendChild(createPaginationItem("...", "catalog__pagination-item--ellipsis", false));
+            return;
+          }
+
+          var isActivePage = page === state.page;
+          var pageNode = createPaginationItem(page, "", false);
+          pageNode.classList.toggle("active", isActivePage);
+
+          if (isActivePage) {
+            pageNode.setAttribute("aria-current", "page");
+          } else {
+            setPaginationTarget(pageNode, page, "Page " + page);
+          }
+
+          paginationRoot.appendChild(pageNode);
+        });
+
+        var nextNode = createPaginationItem(
+          getPaginationArrowIconMarkup("next"),
+          "catalog__pagination-item--arrow" + (state.page >= totalPages ? " catalog__pagination-item--disabled" : ""),
+          true
+        );
+        if (state.page < totalPages) {
+          setPaginationTarget(nextNode, state.page + 1, "Next page");
+        } else {
+          nextNode.setAttribute("aria-disabled", "true");
+        }
+        paginationRoot.appendChild(nextNode);
       }
 
       function renderProducts(products, emptyTitle, emptyText) {
