@@ -2511,6 +2511,71 @@ a:hover {
   font-weight: 400;
   margin-left: 20px;
 }
+.card__editor img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.card__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #cdd3da;
+  border-radius: 10px;
+  background-color: #ffffff;
+}
+.card__editor-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+.card__editor-table th,
+.card__editor-table td {
+  min-width: 0;
+  padding: 13px 12px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  vertical-align: top;
+  color: #1c1c1c;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.card__editor-table--auto {
+  table-layout: auto;
+}
+.card__editor-table th {
+  font-weight: 500;
+  color: #224565;
+  background-color: rgba(2, 94, 161, 0.12);
+}
+.card__editor-table thead th {
+  border-bottom: 1px solid #d3d8dd;
+}
+.card__editor-table tbody tr + tr td {
+  border-top: 1px solid #d3d8dd;
+}
+.card__editor-table th + th,
+.card__editor-table td + td {
+  border-left: 1px solid #d3d8dd;
+}
+.card__editor-table tbody tr:nth-child(even) td {
+  background-color: #f8fafc;
+}
+.card__editor-table th img,
+.card__editor-table td img {
+  width: min(176px, 100%);
+  min-width: 72px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.card__editor-table .card__editor-cell--media {
+  width: 1%;
+  min-width: 200px;
+  white-space: nowrap;
+}
 .card__specs {
   width: 100%;
   overflow-x: auto;
@@ -2610,6 +2675,17 @@ a:hover {
   .card__specs-table .card__specs-section th {
     font-size: 15px;
     line-height: 28px;
+  }
+  .card__editor-table th,
+  .card__editor-table td {
+    padding: 10px 12px;
+  }
+  .card__editor-table th img,
+  .card__editor-table td img {
+    width: min(96px, 100%);
+  }
+  .card__editor-table .card__editor-cell--media {
+    min-width: 88px;
   }
 }
 

@@ -28,6 +28,190 @@
       return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
     };
 
+    $normalizeTabHtml = static function (string $content): string {
+      $content = trim($content);
+
+      if ($content === '') {
+        return '<p></p>';
+      }
+
+      $html = \Illuminate\Support\Str::markdown($content);
+
+      if (! \Illuminate\Support\Str::contains($html, '<table')) {
+        return $html;
+      }
+
+      $document = new \DOMDocument('1.0', 'UTF-8');
+      $previousUseInternalErrors = libxml_use_internal_errors(true);
+      $wrappedHtml = '<?xml encoding="utf-8" ?><div id="product-tab-root">' . $html . '</div>';
+      $loaded = $document->loadHTML($wrappedHtml, \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD);
+
+      libxml_clear_errors();
+      libxml_use_internal_errors($previousUseInternalErrors);
+
+      if (! $loaded) {
+        return $html;
+      }
+
+      $xpath = new \DOMXPath($document);
+      $root = $xpath->query('//*[@id="product-tab-root"]')->item(0);
+
+      if (! $root instanceof \DOMElement) {
+        return $html;
+      }
+
+      $tables = [];
+
+      foreach ($xpath->query('.//table', $root) ?: [] as $tableNode) {
+        if ($tableNode instanceof \DOMElement) {
+          $tables[] = $tableNode;
+        }
+      }
+
+      foreach ($tables as $table) {
+        $tableClasses = preg_split('/\s+/', trim((string) $table->getAttribute('class'))) ?: [];
+        $tableClasses = array_values(array_filter($tableClasses));
+        $hasSpecsTableClass = in_array('card__specs-table', $tableClasses, true);
+        $wrapperClass = 'card__table-wrap';
+
+        if ((! $hasSpecsTableClass) && (! in_array('card__editor-table', $tableClasses, true))) {
+          $tableClasses[] = 'card__editor-table';
+        }
+
+        if ($hasSpecsTableClass) {
+          $wrapperClass = 'card__specs';
+        }
+
+        if (! $hasSpecsTableClass) {
+          $tableClasses = array_values(array_filter(
+            $tableClasses,
+            static fn (string $class): bool => ! preg_match('/^card__editor-table--/', $class),
+          ));
+
+          $rows = [];
+
+          foreach ($xpath->query('.//tr', $table) ?: [] as $rowNode) {
+            if ($rowNode instanceof \DOMElement) {
+              $rows[] = $rowNode;
+            }
+          }
+
+          $columnStats = [];
+
+          foreach ($rows as $row) {
+            $cells = [];
+
+            foreach ($row->childNodes as $cellNode) {
+              if (($cellNode instanceof \DOMElement) && in_array($cellNode->tagName, ['th', 'td'], true)) {
+                $cells[] = $cellNode;
+              }
+            }
+
+            foreach ($cells as $index => $cell) {
+              $columnStats[$index] ??= [
+                'bodyCells' => 0,
+                'imageOnlyBodyCells' => 0,
+                'headerLabels' => [],
+              ];
+
+              $cellText = trim(preg_replace('/\s+/u', ' ', $cell->textContent ?? ''));
+              $imagesCount = 0;
+
+              foreach ($xpath->query('.//img', $cell) ?: [] as $imageNode) {
+                if ($imageNode instanceof \DOMElement) {
+                  $imagesCount++;
+                }
+              }
+
+              $isImageOnlyCell = ($imagesCount > 0) && ($cellText === '');
+
+              if ($cell->tagName === 'th') {
+                if ($cellText !== '') {
+                  $columnStats[$index]['headerLabels'][] = mb_strtolower($cellText);
+                }
+
+                continue;
+              }
+
+              $columnStats[$index]['bodyCells']++;
+
+              if ($isImageOnlyCell) {
+                $columnStats[$index]['imageOnlyBodyCells']++;
+              }
+            }
+          }
+
+          $mediaColumns = [];
+
+          foreach ($columnStats as $index => $stats) {
+            $headerText = implode(' ', $stats['headerLabels']);
+            $isMediaHeader = str_contains($headerText, 'фото')
+              || str_contains($headerText, 'изображ')
+              || str_contains($headerText, 'чертеж')
+              || str_contains($headerText, 'чертёж');
+
+            if (($stats['bodyCells'] > 0) && ($stats['imageOnlyBodyCells'] === $stats['bodyCells']) && $isMediaHeader) {
+              $mediaColumns[] = $index;
+            }
+          }
+
+          if ($mediaColumns !== []) {
+            $tableClasses[] = 'card__editor-table--auto';
+
+            foreach ($rows as $row) {
+              $cells = [];
+
+              foreach ($row->childNodes as $cellNode) {
+                if (($cellNode instanceof \DOMElement) && in_array($cellNode->tagName, ['th', 'td'], true)) {
+                  $cells[] = $cellNode;
+                }
+              }
+
+              foreach ($mediaColumns as $columnIndex) {
+                if (! isset($cells[$columnIndex])) {
+                  continue;
+                }
+
+                $cell = $cells[$columnIndex];
+                $cellClasses = preg_split('/\s+/', trim((string) $cell->getAttribute('class'))) ?: [];
+                $cellClasses = array_values(array_filter($cellClasses));
+                $cellClasses[] = 'card__editor-cell--media';
+                $cell->setAttribute('class', implode(' ', array_unique($cellClasses)));
+              }
+            }
+          }
+        }
+
+        $table->setAttribute('class', implode(' ', array_unique($tableClasses)));
+
+        $parent = $table->parentNode;
+
+        if (! $parent instanceof \DOMElement) {
+          continue;
+        }
+
+        $parentClasses = preg_split('/\s+/', trim((string) $parent->getAttribute('class'))) ?: [];
+        $parentClasses = array_values(array_filter($parentClasses));
+
+        if (($parent->tagName === 'div') && in_array($wrapperClass, $parentClasses, true)) {
+          continue;
+        }
+
+        $wrapper = $document->createElement('div');
+        $wrapper->setAttribute('class', $wrapperClass);
+        $parent->replaceChild($wrapper, $table);
+        $wrapper->appendChild($table);
+      }
+
+      $normalizedHtml = '';
+
+      foreach ($root->childNodes as $childNode) {
+        $normalizedHtml .= $document->saveHTML($childNode);
+      }
+
+      return $normalizedHtml;
+    };
+
     $tabs = collect();
     $usedTabKeys = [];
 
@@ -51,9 +235,7 @@
       $tabs->push([
           'key' => $tabKey,
           'title' => $tab->title,
-          'html' => trim((string) $tab->content) !== ''
-              ? \Illuminate\Support\Str::markdown($tab->content)
-              : '<p></p>',
+          'html' => $normalizeTabHtml((string) $tab->content),
       ]);
     }
 
