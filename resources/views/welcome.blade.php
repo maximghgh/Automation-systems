@@ -20,6 +20,11 @@
       cursor: pointer;
     }
 
+    .main-form__submit:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
     .main-form__error {
       margin-left: 6px;
       font-size: 10px;
@@ -31,6 +36,26 @@
       display: block;
     }
 
+    .main-form__message {
+      margin: 4px 0 0;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #ffffff;
+      display: none;
+    }
+
+    .main-form__message.is-visible {
+      display: block;
+    }
+
+    .main-form__message.is-error {
+      color: #BC5555;
+    }
+
+    .main-form__message.is-success {
+      color: green;
+    }
+
     .main-form__input.is-invalid {
       border-color: #BC5555;
       color: #BC5555;
@@ -38,6 +63,11 @@
 
     .main-form__input.is-invalid::placeholder {
       color: #BC5555;
+    }
+
+    .main-form__checkbox input.is-invalid {
+      outline: 1px solid #BC5555;
+      outline-offset: 2px;
     }
 
     .main-empty-state {
@@ -268,13 +298,17 @@
             <textarea name="message" class="header__search main-form__input main-form__textarea @error('message') is-invalid @enderror" placeholder="Расскажите нам подробнее о ваших пожеланиях" data-form-field="message" aria-invalid="@error('message')true@else false @enderror">{{ old('message') }}</textarea>
             <p class="main-form__error @error('message') is-visible @enderror" data-form-error="message">@error('message'){{ $message }}@enderror</p>
           </div>
-          <div class="main-form__checkbox">
-            <div>
-              <input type="checkbox" name="consent" value="1" {{ old('consent') ? 'checked' : '' }}>
+          <div class="main-form__item">
+            <div class="main-form__checkbox">
+              <div>
+                <input type="checkbox" name="consent" value="1" {{ old('consent') ? 'checked' : '' }} data-form-consent aria-invalid="@error('consent')true@else false @enderror">
+              </div>
+              <p>Я соглашаюсь на <a href="#">обработку персональных данных</a></p>
             </div>
-            <p>Я соглашаюсь на <a href="#">обработку персональных данных</a></p>
+            <p class="main-form__error @error('consent') is-visible @enderror" data-form-error="consent">@error('consent'){{ $message }}@enderror</p>
           </div>
           <button type="submit" class="btn btn__blue main-form__submit">Отправить заявку</button>
+          <p class="main-form__message @if(session('success')) is-visible is-success @endif" data-call-form-message @if(!session('success')) hidden @endif>{{ session('success') }}</p>
         </form>
       </div>
     </section>
@@ -497,6 +531,13 @@
         return;
       }
 
+      var consentField = form.querySelector("[data-form-consent]");
+      var consentError = form.querySelector('[data-form-error="consent"]');
+      var formMessage = form.querySelector("[data-call-form-message]");
+      var submitButton = form.querySelector(".main-form__submit");
+      var defaultSubmitText = submitButton ? submitButton.textContent.trim() : "";
+      var isSubmitting = false;
+
       function normalizePhoneDigits(value) {
         var digits = (value || "").replace(/\D/g, "");
 
@@ -599,6 +640,73 @@
         }
       }
 
+      function setFormMessage(message, isError) {
+        if (!formMessage) {
+          return;
+        }
+
+        var hasMessage = typeof message === "string" && message.trim().length > 0;
+        formMessage.hidden = !hasMessage;
+        formMessage.textContent = hasMessage ? message.trim() : "";
+        formMessage.classList.toggle("is-visible", hasMessage);
+        formMessage.classList.toggle("is-error", hasMessage && !!isError);
+        formMessage.classList.toggle("is-success", hasMessage && !isError);
+      }
+
+      function showConsentError(message) {
+        if (consentField) {
+          consentField.classList.add("is-invalid");
+          consentField.setAttribute("aria-invalid", "true");
+        }
+
+        if (consentError) {
+          consentError.textContent = message;
+          consentError.classList.add("is-visible");
+        }
+      }
+
+      function clearConsentError() {
+        if (consentField) {
+          consentField.classList.remove("is-invalid");
+          consentField.setAttribute("aria-invalid", "false");
+        }
+
+        if (consentError) {
+          consentError.textContent = "";
+          consentError.classList.remove("is-visible");
+        }
+      }
+
+      function validateConsent() {
+        if (!consentField) {
+          return true;
+        }
+
+        if (!consentField.checked) {
+          showConsentError("Подтвердите обработку персональных данных");
+          return false;
+        }
+
+        clearConsentError();
+        return true;
+      }
+
+      function extractFirstError(errors) {
+        if (!errors || typeof errors !== "object") {
+          return "";
+        }
+
+        var keys = Object.keys(errors);
+        for (var i = 0; i < keys.length; i += 1) {
+          var messages = errors[keys[i]];
+          if (Array.isArray(messages) && messages.length > 0) {
+            return String(messages[0]);
+          }
+        }
+
+        return "";
+      }
+
       function validateField(fieldName) {
         var field = getFieldNode(fieldName);
         if (!field) {
@@ -636,6 +744,10 @@
             field.value = formatRuPhone(field.value);
           }
 
+          if (formMessage && formMessage.classList.contains("is-error")) {
+            setFormMessage("", false);
+          }
+
           if (field.classList.contains("is-invalid")) {
             validateField(fieldName);
           }
@@ -665,14 +777,125 @@
         phoneField.value = formatRuPhone(phoneField.value);
       }
 
+      if (consentField) {
+        consentField.addEventListener("change", function () {
+          if (consentField.checked) {
+            clearConsentError();
+          }
+
+          if (formMessage && formMessage.classList.contains("is-error")) {
+            setFormMessage("", false);
+          }
+        });
+      }
+
       form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        if (isSubmitting) {
+          return;
+        }
+
         var isNameValid = validateField("name");
         var isPhoneValid = validateField("phone");
         var isMessageValid = validateField("message");
+        var isConsentValid = validateConsent();
 
-        if (!isNameValid || !isPhoneValid || !isMessageValid) {
-          event.preventDefault();
+        if (!isNameValid || !isPhoneValid || !isMessageValid || !isConsentValid) {
+          setFormMessage("Проверьте форму и заполните обязательные поля.", true);
+          return;
         }
+
+        var action = form.getAttribute("action") || window.location.href;
+        var method = (form.getAttribute("method") || "POST").toUpperCase();
+        var formData = new FormData(form);
+
+        setFormMessage("Отправляем заявку...", false);
+        isSubmitting = true;
+
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = "Отправляем...";
+        }
+
+        fetch(action, {
+          method: method,
+          body: formData,
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
+          .then(function (response) {
+            return response
+              .json()
+              .catch(function () {
+                return null;
+              })
+              .then(function (payload) {
+                return {
+                  ok: response.ok,
+                  payload: payload
+                };
+              });
+          })
+          .then(function (result) {
+            var payload = result.payload;
+
+            if (!result.ok) {
+              if (payload && payload.errors) {
+                if (payload.errors.name && payload.errors.name[0]) {
+                  showError("name", String(payload.errors.name[0]));
+                }
+                if (payload.errors.phone && payload.errors.phone[0]) {
+                  showError("phone", String(payload.errors.phone[0]));
+                }
+                if (payload.errors.message && payload.errors.message[0]) {
+                  showError("message", String(payload.errors.message[0]));
+                }
+                if (payload.errors.consent && payload.errors.consent[0]) {
+                  showConsentError(String(payload.errors.consent[0]));
+                }
+              }
+
+              var firstError = extractFirstError(payload && payload.errors);
+              var errorMessage = firstError || (payload && payload.message) || "Не удалось отправить заявку.";
+              setFormMessage(errorMessage, true);
+              return;
+            }
+
+            form.reset();
+            ["name", "phone", "message"].forEach(function (fieldName) {
+              var field = getFieldNode(fieldName);
+              if (field) {
+                field.value = "";
+              }
+            });
+
+            if (consentField) {
+              consentField.checked = false;
+            }
+
+            ["name", "phone", "message"].forEach(clearError);
+            clearConsentError();
+
+            if (phoneField) {
+              phoneField.value = "";
+            }
+
+            setFormMessage((payload && payload.message) || "Заявка отправлена. Мы скоро с вами свяжемся.", false);
+          })
+          .catch(function () {
+            setFormMessage("Ошибка отправки. Проверьте интернет и попробуйте еще раз.", true);
+          })
+          .finally(function () {
+            isSubmitting = false;
+
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.textContent = defaultSubmitText || "Отправить заявку";
+            }
+          });
       });
     })();
   </script>

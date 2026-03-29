@@ -780,6 +780,7 @@
   var stepOrder = ["cart", "details", "request"];
   var cartButtonText = nextButton ? nextButton.getAttribute("data-basket-text-cart") || nextButton.textContent : "";
   var detailsButtonText = nextButton ? nextButton.getAttribute("data-basket-text-details") || cartButtonText : "";
+  var emptyCartButtonTitle = nextButton ? nextButton.getAttribute("data-basket-empty-title") || "Внесите товары в корзину" : "";
   var currentStep = "cart";
   var isSubmitting = false;
   var selectedFiles = [];
@@ -792,6 +793,28 @@
     var stepIndex = getStepIndex(step);
     var currentIndex = getStepIndex(currentStep);
     return stepIndex > -1 && currentIndex > -1 && stepIndex < currentIndex;
+  }
+
+  function isCartAdvanceBlocked() {
+    return currentStep === "cart" && getBasketItems().length === 0;
+  }
+
+  function syncNextButtonState() {
+    if (!nextButton) {
+      return;
+    }
+
+    var isBlocked = isCartAdvanceBlocked();
+    nextButton.disabled = isSubmitting;
+    nextButton.classList.toggle("is-disabled", isBlocked);
+    nextButton.setAttribute("aria-disabled", (isBlocked || isSubmitting) ? "true" : "false");
+
+    if (isBlocked && emptyCartButtonTitle) {
+      nextButton.setAttribute("title", emptyCartButtonTitle);
+      return;
+    }
+
+    nextButton.removeAttribute("title");
   }
 
   function syncStepUi(step) {
@@ -826,6 +849,8 @@
     if (nextButton) {
       nextButton.textContent = step === "details" ? detailsButtonText : cartButtonText;
     }
+
+    syncNextButtonState();
   }
 
   function setProjectPanelState(isOpen) {
@@ -1216,9 +1241,7 @@
 
     setFormMessage("Отправляем заявку...", false);
     isSubmitting = true;
-    if (nextButton) {
-      nextButton.disabled = true;
-    }
+    syncNextButtonState();
 
     try {
       var response = await fetch(action, {
@@ -1263,14 +1286,16 @@
       return false;
     } finally {
       isSubmitting = false;
-      if (nextButton) {
-        nextButton.disabled = false;
-      }
+      syncNextButtonState();
     }
   }
 
   if (nextButton) {
     nextButton.addEventListener("click", function () {
+      if (isCartAdvanceBlocked() || isSubmitting) {
+        return;
+      }
+
       if (currentStep === "cart") {
         syncStepUi("details");
         return;
@@ -1366,6 +1391,18 @@
   }
 
   updateSelectedFilesUi();
+
+  window.addEventListener("automation-cart:changed", function () {
+    syncNextButtonState();
+  });
+
+  window.addEventListener("storage", function (event) {
+    if (!event || event.key !== "automation_cart_v1") {
+      return;
+    }
+
+    syncNextButtonState();
+  });
 
   syncStepUi("cart");
 })();
@@ -1853,6 +1890,8 @@
       updateHeaderBasketLabel(cart);
       renderBasketProducts(cart);
     });
+
+    emitCartChanged(initialCart);
   }
 
   window.AutomationCart = {

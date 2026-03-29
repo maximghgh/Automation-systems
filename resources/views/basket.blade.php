@@ -97,8 +97,8 @@
                   <div class="main-form__item">
                     <p class="main-form__name">Прикрепить файлы</p>
                     <label class="basket__dropzone" for="basket-files">
-                      <input class="basket__dropzone-input" id="basket-files" name="attachment[]" type="file" multiple data-basket-file-input>
-                      <span data-basket-files-placeholder>Загрузите или перетащите файл с планом этажа, планом кровли, разрезы и сечения или прочие файлы (*прописать ограничения по размерам и форматам*)</span>
+                      <input class="basket__dropzone-input" id="basket-files" name="attachment[]" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.zip" multiple data-basket-file-input>
+                      <span data-basket-files-placeholder>Загрузите или перетащите файлы (PDF, DOC, DOCX, PNG, JPG, JPEG, ZIP, до 50 МБ на файл)</span>
                     </label>
                     <p class="basket__files-summary" data-basket-files-summary hidden></p>
                     <ul class="basket__files-list" data-basket-files-list hidden></ul>
@@ -111,7 +111,7 @@
         </div>
         <div class="basket__sum">
           <p class="basket__sum-text">Итоговая сумма будет подтверждена менеджером</p>
-          <button type="button" class="btn btn__blue basket__sum-btn" data-basket-next-btn data-basket-text-cart="Запросить стоимость" data-basket-text-details="Отправить запрос">Запросить стоимость</button>
+          <button type="button" class="btn btn__blue basket__sum-btn" data-basket-next-btn data-basket-text-cart="Запросить стоимость" data-basket-text-details="Отправить запрос" data-basket-empty-title="Внесите товары в корзину">Запросить стоимость</button>
         </div>
       </div>
       <div class="basket__request" data-basket-request-panel>

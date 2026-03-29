@@ -37,7 +37,10 @@
 
       $html = \Illuminate\Support\Str::markdown($content);
 
-      if (! \Illuminate\Support\Str::contains($html, '<table')) {
+      if (
+        (! \Illuminate\Support\Str::contains($html, '<table'))
+        && (! \Illuminate\Support\Str::contains($html, '<img'))
+      ) {
         return $html;
       }
 
@@ -58,6 +61,69 @@
 
       if (! $root instanceof \DOMElement) {
         return $html;
+      }
+
+      $images = [];
+
+      foreach ($xpath->query('.//img', $root) ?: [] as $imageNode) {
+        if ($imageNode instanceof \DOMElement) {
+          $images[] = $imageNode;
+        }
+      }
+
+      foreach ($images as $imageNode) {
+        $src = trim((string) $imageNode->getAttribute('src'));
+
+        if ($src === '') {
+          continue;
+        }
+
+        $isInsideTable = false;
+        $linkNode = null;
+        $ancestorNode = $imageNode->parentNode;
+
+        while ($ancestorNode instanceof \DOMNode) {
+          if ($ancestorNode instanceof \DOMElement) {
+            if ($ancestorNode->tagName === 'a') {
+              $linkNode = $ancestorNode;
+            }
+
+            if ($ancestorNode->tagName === 'table') {
+              $isInsideTable = true;
+              break;
+            }
+          }
+
+          $ancestorNode = $ancestorNode->parentNode;
+        }
+
+        $imageClasses = preg_split('/\s+/', trim((string) $imageNode->getAttribute('class'))) ?: [];
+        $imageClasses = array_values(array_filter($imageClasses));
+        $imageClasses[] = 'card__editor-image';
+        $imageClasses[] = $isInsideTable ? 'card__editor-image--table' : 'card__editor-image--standalone';
+        $imageNode->setAttribute('class', implode(' ', array_unique($imageClasses)));
+
+        if (! $linkNode instanceof \DOMElement) {
+          $parentNode = $imageNode->parentNode;
+
+          if (! $parentNode instanceof \DOMNode) {
+            continue;
+          }
+
+          $linkNode = $document->createElement('a');
+          $parentNode->replaceChild($linkNode, $imageNode);
+          $linkNode->appendChild($imageNode);
+        }
+
+        $linkClasses = preg_split('/\s+/', trim((string) $linkNode->getAttribute('class'))) ?: [];
+        $linkClasses = array_values(array_filter($linkClasses));
+        $linkClasses[] = 'card__editor-image-link';
+        $linkClasses[] = $isInsideTable ? 'card__editor-image-link--table' : 'card__editor-image-link--standalone';
+
+        $linkNode->setAttribute('class', implode(' ', array_unique($linkClasses)));
+        $linkNode->setAttribute('href', $src);
+        $linkNode->setAttribute('target', '_blank');
+        $linkNode->setAttribute('rel', 'noopener noreferrer');
       }
 
       $tables = [];
@@ -256,7 +322,7 @@
       data-cart-product-category="{{ $categoryName }}"
     >
       <div class="card__links">
-        <a class="card__link" href="/">Каталог</a>
+        <a class="card__link" href="{{ route('catalog.page') }}">Каталог</a>
         <div class="card__logo">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12.3583 9.40874L8.82501 5.8754C8.74754 5.7973 8.65538 5.7353 8.55383 5.693C8.45228 5.65069 8.34336 5.62891 8.23335 5.62891C8.12334 5.62891 8.01442 5.65069 7.91287 5.693C7.81132 5.7353 7.71915 5.7973 7.64168 5.8754C7.48647 6.03154 7.39935 6.24275 7.39935 6.4629C7.39935 6.68306 7.48647 6.89427 7.64168 7.0504L10.5917 10.0004L7.64168 12.9504C7.48647 13.1065 7.39935 13.3178 7.39935 13.5379C7.39935 13.7581 7.48647 13.9693 7.64168 14.1254C7.71955 14.2026 7.81189 14.2637 7.91342 14.3052C8.01496 14.3467 8.12367 14.3677 8.23335 14.3671C8.34302 14.3677 8.45174 14.3467 8.55327 14.3052C8.6548 14.2637 8.74715 14.2026 8.82501 14.1254L12.3583 10.5921C12.4365 10.5146 12.4984 10.4224 12.5408 10.3209C12.5831 10.2193 12.6048 10.1104 12.6048 10.0004C12.6048 9.89039 12.5831 9.78147 12.5408 9.67992C12.4984 9.57837 12.4365 9.48621 12.3583 9.40874Z" fill="black"/>
@@ -269,7 +335,9 @@
         <h1 class="card__title">{{ $product->title }}</h1>
         <div class="card__head">
           <div class="card__image">
-            <img src="{{ $mediaUrl($product->image, '/assets/3e1e96143a03aff456fb2666bef78ffa11f15f5d.jpg') }}" alt="{{ $product->title }}">
+            <a href="{{ $mediaUrl($product->image, '/assets/3e1e96143a03aff456fb2666bef78ffa11f15f5d.jpg') }}" target="_blank" rel="noopener noreferrer" class="card__image-link">
+              <img src="{{ $mediaUrl($product->image, '/assets/3e1e96143a03aff456fb2666bef78ffa11f15f5d.jpg') }}" alt="{{ $product->title }}">
+            </a>
           </div>
           <div class="card__params">
             <div class="card__param">

@@ -2344,10 +2344,17 @@ a:hover {
   width: 100%;
   height: 275px;
 }
+.card__image-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+}
 .card__image img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  cursor: zoom-in;
 }
 .card__params {
   width: 100%;
@@ -2515,6 +2522,31 @@ a:hover {
   display: block;
   max-width: 100%;
   height: auto;
+}
+.card__editor-image-link {
+  text-decoration: none;
+}
+.card__editor-image-link img {
+  cursor: zoom-in;
+  transition: opacity 0.2s ease;
+}
+.card__editor-image-link:hover img {
+  opacity: 0.92;
+}
+.card__editor-image-link--standalone {
+  display: block;
+  width: min(100%, 420px);
+  max-width: 100%;
+  margin: 0 auto;
+}
+.card__editor-image--standalone {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: contain;
+}
+.card__editor-image-link--table {
+  display: inline-block;
+  max-width: 100%;
 }
 .card__table-wrap {
   width: 100%;
@@ -2686,6 +2718,9 @@ a:hover {
   }
   .card__editor-table .card__editor-cell--media {
     min-width: 88px;
+  }
+  .card__editor-image-link--standalone {
+    width: min(100%, 320px);
   }
 }
 
@@ -3460,6 +3495,15 @@ a:hover {
   padding: 18px;
   border: 0;
   cursor: pointer;
+}
+.basket__sum-btn.is-disabled,
+.basket__sum-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.basket__sum-btn.is-disabled:hover,
+.basket__sum-btn:disabled:hover {
+  background-color: #3873A9;
 }
 .basket__sum-text {
   font-size: 16px;
