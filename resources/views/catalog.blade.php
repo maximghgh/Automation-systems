@@ -8,37 +8,73 @@
 </head>
 <body>@include('components.header')
 
-  <main class="page">
-    <section class="catalog">
-      <h1 class="main__title">Каталог продукции</h1>
-      <div class="catalog__container">
-        <div class="catalog__filter">
-          <div class="catalog__head">
-            <p>Фильтр</p>
-            <a href="#" data-catalog-reset>Сбросить</a>
-          </div>
-          <div class="catalog__switch">
-            <div class="catalog__switch-item active" data-catalog-tab="brands">По брендам</div>
-            <div class="catalog__switch-line"></div>
-            <div class="catalog__switch-item" data-catalog-tab="categories">По категориям</div>
-          </div>
-          <div class="catalog__grid" data-catalog-brands></div>
-          <div class="catalog__category" data-catalog-categories></div>
-        </div>
-        <div class="catalog__list">
-          <div class="catalog__list-grid" data-catalog-products></div>
-          <div class="catalog__pagination" data-catalog-pagination></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  @include('components.footer')
-
   @php
     $hasSubcategoriesTable = \Illuminate\Support\Facades\Schema::hasTable('subcategories');
     $hasProductsCategoryId = \Illuminate\Support\Facades\Schema::hasColumn('products', 'category_id');
     $hasProductsSubcategoryId = \Illuminate\Support\Facades\Schema::hasColumn('products', 'subcategory_id');
+
+    $normalizeIds = static function (mixed $rawValue): array {
+      if ($rawValue === null || $rawValue === '') {
+        return [];
+      }
+
+      $values = is_array($rawValue)
+        ? $rawValue
+        : explode(',', (string) $rawValue);
+
+      return collect($values)
+        ->map(static fn ($value): int => (int) $value)
+        ->filter(static fn (int $value): bool => $value > 0)
+        ->unique()
+        ->values()
+        ->all();
+    };
+
+    $normalizeMediaPath = static function (?string $path): string {
+      $path = is_string($path) ? trim($path) : '';
+
+      if ($path === '') {
+        return '';
+      }
+
+      if (\Illuminate\Support\Str::startsWith($path, ['http://', 'https://', '/'])) {
+        return $path;
+      }
+
+      if (\Illuminate\Support\Str::startsWith($path, 'storage/')) {
+        return '/' . $path;
+      }
+
+      return '/storage/' . ltrim($path, '/');
+    };
+
+    $getPaginationItems = static function (int $totalPages, int $currentPage): array {
+      if ($totalPages <= 1) {
+        return [];
+      }
+
+      if ($totalPages <= 7) {
+        return range(1, $totalPages);
+      }
+
+      if ($currentPage <= 4) {
+        return [1, 2, 3, 4, 5, 'ellipsis', $totalPages];
+      }
+
+      if ($currentPage >= $totalPages - 3) {
+        return [1, 'ellipsis', $totalPages - 4, $totalPages - 3, $totalPages - 2, $totalPages - 1, $totalPages];
+      }
+
+      return [1, 'ellipsis', $currentPage - 1, $currentPage, $currentPage + 1, 'ellipsis', $totalPages];
+    };
+
+    $getPaginationArrowIconMarkup = static function (string $direction): string {
+      $transform = $direction === 'next' ? ' transform="rotate(180 12 12)"' : '';
+
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11.2899 11.9997L14.8299 8.4597C15.0162 8.27234 15.1207 8.01889 15.1207 7.7547C15.1207 7.49052 15.0162 7.23707 14.8299 7.0497C14.737 6.95598 14.6264 6.88158 14.5045 6.83081C14.3827 6.78004 14.252 6.75391 14.1199 6.75391C13.9879 6.75391 13.8572 6.78004 13.7354 6.83081C13.6135 6.88158 13.5029 6.95598 13.4099 7.0497L9.16994 11.2897C9.07622 11.3827 9.00182 11.4933 8.95105 11.6151C8.90028 11.737 8.87415 11.8677 8.87415 11.9997C8.87415 12.1317 8.90028 12.2624 8.95105 12.3843C9.00182 12.5061 9.07622 12.6167 9.16994 12.7097L13.4099 16.9997C13.5034 17.0924 13.6142 17.1657 13.736 17.2155C13.8579 17.2652 13.9883 17.2905 14.1199 17.2897C14.2516 17.2905 14.382 17.2652 14.5038 17.2155C14.6257 17.1657 14.7365 17.0924 14.8299 16.9997C15.0162 16.8123 15.1207 16.5589 15.1207 16.2947C15.1207 16.0305 15.0162 15.7771 14.8299 15.5897L11.2899 11.9997Z" fill="currentColor"' . $transform . '/></svg>';
+    };
+
+    $fallbackProductImage = '/assets/272582fd9c288dc352c6e9e18a1c2ebd46283542.png';
 
     $catalogBrands = \App\Models\Brand::query()
       ->orderBy('name')
@@ -85,12 +121,48 @@
 
     $catalogProducts = $catalogProductsQuery->get($productColumns);
 
+    $availableBrandIds = $catalogBrands
+      ->pluck('id')
+      ->map(static fn ($id): int => (int) $id)
+      ->all();
+
+    $availableCategoryIds = $catalogCategories
+      ->pluck('id')
+      ->map(static fn ($id): int => (int) $id)
+      ->all();
+
+    $availableSubcategoryIds = $hasSubcategoriesTable
+      ? $catalogCategories
+        ->flatMap(static fn ($category) => $category->subcategories->pluck('id'))
+        ->map(static fn ($id): int => (int) $id)
+        ->all()
+      : [];
+
+    $selectedBrandIds = array_values(array_intersect(
+      $normalizeIds(request()->query('brands')),
+      $availableBrandIds,
+    ));
+
+    $selectedCategoryIds = array_values(array_intersect(
+      $normalizeIds(request()->query('categories')),
+      $availableCategoryIds,
+    ));
+
+    $selectedSubcategoryIds = array_values(array_intersect(
+      $normalizeIds(request()->query('subcategories')),
+      $availableSubcategoryIds,
+    ));
+
+    $initialTab = request()->query('tab') === 'categories' || $selectedCategoryIds !== [] || $selectedSubcategoryIds !== []
+      ? 'categories'
+      : 'brands';
+
     $catalogBootstrapPayload = [
       'filters' => [
         'selected' => [
-          'brands' => [],
-          'categories' => [],
-          'subcategories' => [],
+          'brands' => $selectedBrandIds,
+          'categories' => $selectedCategoryIds,
+          'subcategories' => $selectedSubcategoryIds,
         ],
         'brands' => $catalogBrands->map(fn ($brand) => [
           'id' => $brand->id,
@@ -144,7 +216,155 @@
         ];
       })->values(),
     ];
+
+    $filteredCatalogProducts = collect($catalogBootstrapPayload['products'])
+      ->filter(function (array $product) use ($selectedBrandIds, $selectedCategoryIds, $selectedSubcategoryIds): bool {
+        $brandId = (int) data_get($product, 'brand.id');
+        $categoryId = (int) data_get($product, 'category.id');
+        $subcategoryId = (int) data_get($product, 'subcategory.id');
+
+        if ($selectedBrandIds !== [] && ! in_array($brandId, $selectedBrandIds, true)) {
+          return false;
+        }
+
+        if ($selectedCategoryIds !== [] && ! in_array($categoryId, $selectedCategoryIds, true)) {
+          return false;
+        }
+
+        if ($selectedSubcategoryIds !== [] && ! in_array($subcategoryId, $selectedSubcategoryIds, true)) {
+          return false;
+        }
+
+        return true;
+      })
+      ->values();
+
+    $itemsPerPage = 12;
+    $totalFilteredProducts = $filteredCatalogProducts->count();
+    $initialTotalPages = $totalFilteredProducts > 0
+      ? (int) ceil($totalFilteredProducts / $itemsPerPage)
+      : 0;
+    $initialPage = max(1, (int) request()->query('page', 1));
+
+    if ($initialTotalPages > 0) {
+      $initialPage = min($initialPage, $initialTotalPages);
+    } else {
+      $initialPage = 1;
+    }
+
+    $initialPagedProducts = $filteredCatalogProducts
+      ->forPage($initialPage, $itemsPerPage)
+      ->values();
+
+    $catalogPaginationItems = $getPaginationItems($initialTotalPages, $initialPage);
+    $currentQuery = request()->query();
+
+    $buildCatalogPageUrl = static function (int $page) use ($currentQuery): string {
+      $query = $currentQuery;
+
+      if ($page > 1) {
+        $query['page'] = $page;
+      } else {
+        unset($query['page']);
+      }
+
+      return route('catalog.page', $query);
+    };
   @endphp
+
+  <main class="page">
+    <section class="catalog">
+      <h1 class="main__title">Каталог продукции</h1>
+      <div class="catalog__container">
+        <div class="catalog__filter">
+          <div class="catalog__head">
+            <p>Фильтр</p>
+            <a href="#" data-catalog-reset>Сбросить</a>
+          </div>
+          <div class="catalog__switch">
+            <div class="catalog__switch-item {{ $initialTab === 'brands' ? 'active' : '' }}" data-catalog-tab="brands">По брендам</div>
+            <div class="catalog__switch-line"></div>
+            <div class="catalog__switch-item {{ $initialTab === 'categories' ? 'active' : '' }}" data-catalog-tab="categories">По категориям</div>
+          </div>
+          <div class="catalog__grid" data-catalog-brands @if ($initialTab !== 'brands') style="display: none;" @endif></div>
+          <div class="catalog__category" data-catalog-categories @if ($initialTab !== 'categories') style="display: none;" @endif></div>
+        </div>
+        <div class="catalog__list">
+          <div class="catalog__list-grid" data-catalog-products>
+            @forelse ($initialPagedProducts as $product)
+              @php
+                $title = trim((string) ($product['title'] ?? ''));
+                $title = $title !== '' ? $title : 'Товар';
+                $description = trim((string) ($product['short_description'] ?? ''));
+                $slug = trim((string) ($product['slug'] ?? ''));
+                $productUrl = $slug !== '' ? route('products.show', ['product' => $slug]) : '#';
+                $image = $normalizeMediaPath($product['image'] ?? null) ?: $fallbackProductImage;
+              @endphp
+              <div class="main-new__item catalog__list-item">
+                <div class="catalog__list-head">
+                  <div class="main-new__img catalog__list-img">
+                    <img src="{{ $image }}" alt="{{ $title }}" />
+                  </div>
+                  <p class="main-new__name catalog__list-name">{{ $title }}</p>
+                  @if ($description !== '')
+                    <p class="main-projects__text catalog__list-text">{{ $description }}</p>
+                  @endif
+                </div>
+                <a href="{{ $productUrl }}" class="btn btn__blue main-new__btn">Подробнее</a>
+              </div>
+            @empty
+              <div class="catalog__empty">
+                <p class="catalog__empty-title">Нет товаров</p>
+                <p class="catalog__empty-text">Товары по выбранным фильтрам скоро появятся.</p>
+              </div>
+            @endforelse
+          </div>
+          <div class="catalog__pagination" data-catalog-pagination @if ($initialTotalPages <= 1) hidden @endif>
+            @if ($initialTotalPages > 1)
+              @if ($initialPage > 1)
+                <a
+                  href="{{ $buildCatalogPageUrl($initialPage - 1) }}"
+                  class="catalog__pagination-item catalog__pagination-item--arrow"
+                  data-page="{{ $initialPage - 1 }}"
+                  aria-label="Previous page"
+                >{!! $getPaginationArrowIconMarkup('prev') !!}</a>
+              @else
+                <div class="catalog__pagination-item catalog__pagination-item--arrow catalog__pagination-item--disabled" aria-disabled="true">{!! $getPaginationArrowIconMarkup('prev') !!}</div>
+              @endif
+
+              @foreach ($catalogPaginationItems as $pageItem)
+                @if ($pageItem === 'ellipsis')
+                  <div class="catalog__pagination-item catalog__pagination-item--ellipsis">...</div>
+                @elseif ($pageItem === $initialPage)
+                  <div class="catalog__pagination-item active" aria-current="page">{{ $pageItem }}</div>
+                @else
+                  <a
+                    href="{{ $buildCatalogPageUrl($pageItem) }}"
+                    class="catalog__pagination-item"
+                    data-page="{{ $pageItem }}"
+                    aria-label="Page {{ $pageItem }}"
+                  >{{ $pageItem }}</a>
+                @endif
+              @endforeach
+
+              @if ($initialPage < $initialTotalPages)
+                <a
+                  href="{{ $buildCatalogPageUrl($initialPage + 1) }}"
+                  class="catalog__pagination-item catalog__pagination-item--arrow"
+                  data-page="{{ $initialPage + 1 }}"
+                  aria-label="Next page"
+                >{!! $getPaginationArrowIconMarkup('next') !!}</a>
+              @else
+                <div class="catalog__pagination-item catalog__pagination-item--arrow catalog__pagination-item--disabled" aria-disabled="true">{!! $getPaginationArrowIconMarkup('next') !!}</div>
+              @endif
+            @endif
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  @include('components.footer')
 
   <script src="{{ asset('js/main.js') }}"></script>
   <script>
@@ -1152,6 +1372,17 @@
         var pageNode = event.target.closest("[data-page]");
         if (!pageNode) {
           return;
+        }
+
+        if (
+          pageNode.tagName === "A" &&
+          event.button === 0 &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.shiftKey &&
+          !event.altKey
+        ) {
+          event.preventDefault();
         }
 
         handlePageChange(pageNode);

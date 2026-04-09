@@ -59,10 +59,12 @@ Route::get('/search', [SearchController::class, 'search'])->name('search');
 // Каталог
 
 // путь для страницы каталога + фильтры (бренды, категории, подкатегории)
-Route::view('/catalog.html', 'catalog')
+Route::view('/catalog', 'catalog')
     ->name('catalog.page');
 
-Route::get('/catalog', [CatalogController::class, 'index'])
+Route::redirect('/catalog.html', '/catalog', 301);
+
+Route::get('/catalog/data', [CatalogController::class, 'index'])
     ->name('catalog.index');
 
 // Приемущества
