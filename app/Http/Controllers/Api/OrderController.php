@@ -47,6 +47,9 @@ class OrderController extends Controller
             'attachment' => ['sometimes', 'array'],
             'attachment.*' => ['file', 'mimes:pdf,doc,docx,png,jpg,jpeg,zip', 'max:51200'],
             'email-type' => ['nullable', 'exists:email_types,id'],
+            'consent' => ['accepted'],
+        ], [
+            'consent.accepted' => 'Примите условия оферты и политики конфиденциальности.',
         ])->validate();
 
         $items = array_map(static function (array $item): array {

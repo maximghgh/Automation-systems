@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ $service->title }}</title>
+  @include('components.favicon')
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
 </head>
@@ -445,7 +446,6 @@
   </script>
 </body>
 </html>
-
 
 
 

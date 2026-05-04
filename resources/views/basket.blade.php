@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistemi</title>
+  @include('components.favicon')
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
 </head>
@@ -68,9 +69,14 @@
               </div>
               <div class="main-form__checkbox basket__field--full">
                     <div>
-                    <input type="checkbox" data-basket-agreement required>
+                    <input type="checkbox" name="consent" value="1" data-basket-agreement required>
                     </div>
-                    <p>Я соглашаюсь на <a href="#">обработку персональных данных</a></p>
+                    <p>
+                      Я соглашаюсь с условиями
+                      <a href="{{ route('legal.public-offer') }}" target="_blank" rel="noopener noreferrer">публичной оферты</a>,
+                      <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener noreferrer">политики конфиденциальности</a>
+                      и использованием файлов cookie.
+                    </p>
                 </div>
               <div class="basket__project basket__field--full">
                 <button type="button" class="basket__project-toggle" data-basket-project-toggle aria-expanded="false">

@@ -1214,7 +1214,7 @@
 
     var agreement = orderForm.querySelector("[data-basket-agreement]");
     if (agreement && !agreement.checked) {
-      setFormMessage("Подтвердите обработку персональных данных.", true);
+      setFormMessage("Примите условия оферты и политики конфиденциальности.", true);
       agreement.focus();
       return false;
     }

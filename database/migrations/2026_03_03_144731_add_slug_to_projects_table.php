@@ -50,7 +50,9 @@ return new class extends Migration
             $table->unique('slug');
         });
 
-        DB::statement('ALTER TABLE projects ALTER COLUMN slug SET NOT NULL');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE projects ALTER COLUMN slug SET NOT NULL');
+        }
     }
 
     /**

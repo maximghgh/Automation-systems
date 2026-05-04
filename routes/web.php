@@ -28,6 +28,12 @@ Route::view('/contact', 'contact')
 
 Route::view('/contact.html', 'contact');
 
+Route::view('/page/publichnaya-oferta', 'legal.public_offer')
+    ->name('legal.public-offer');
+
+Route::view('/page/politika-konfidencialnosti', 'legal.privacy')
+    ->name('legal.privacy');
+
 Route::get('/services', [ServicesController::class, 'index'])
     ->name('services.index');
 
@@ -87,4 +93,3 @@ Route::post('/order-request', [OrderController::class, 'submitForm'])
 
 // путь на страницу корзины (только верстка)
 Route::view('/basket', 'basket')->name('basket');
-

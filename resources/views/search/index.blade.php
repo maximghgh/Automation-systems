@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>&#1055;&#1086;&#1080;&#1089;&#1082; &#1087;&#1086; &#1089;&#1072;&#1081;&#1090;&#1091;</title>
+  @include('components.favicon')
   <link rel="stylesheet" href="{{ asset('css/style.css') }}" />
 </head>
 <body>@include('components.header')

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Системы автоматизации</title>
+  @include('components.favicon')
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
@@ -303,7 +304,12 @@
               <div>
                 <input type="checkbox" name="consent" value="1" {{ old('consent') ? 'checked' : '' }} data-form-consent aria-invalid="@error('consent')true@else false @enderror">
               </div>
-              <p>Я соглашаюсь на <a href="#">обработку персональных данных</a></p>
+              <p>
+                Я соглашаюсь с условиями
+                <a href="{{ route('legal.public-offer') }}" target="_blank" rel="noopener noreferrer">публичной оферты</a>,
+                <a href="{{ route('legal.privacy') }}" target="_blank" rel="noopener noreferrer">политики конфиденциальности</a>
+                и использованием файлов cookie.
+              </p>
             </div>
             <p class="main-form__error @error('consent') is-visible @enderror" data-form-error="consent">@error('consent'){{ $message }}@enderror</p>
           </div>
@@ -683,7 +689,7 @@
         }
 
         if (!consentField.checked) {
-          showConsentError("Подтвердите обработку персональных данных");
+          showConsentError("Примите условия оферты и политики конфиденциальности");
           return false;
         }
 
@@ -901,4 +907,3 @@
   </script>
 </body>
 </html>
-

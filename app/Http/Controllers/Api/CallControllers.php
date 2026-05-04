@@ -19,6 +19,9 @@ class CallControllers extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:50'],
             'message' => ['required', 'string'],
+            'consent' => ['accepted'],
+        ], [
+            'consent.accepted' => 'Примите условия оферты и политики конфиденциальности.',
         ]);
 
         $routing = $this->resolveRouting($request, $data['email_type'] ?? null);
