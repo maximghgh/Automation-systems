@@ -1,6 +1,9 @@
 @font-face {
   font-family: "Roboto";
-  src: url(/assets/fonds/Roboto-VariableFont_wdth\,wght.ttf);
+  src: url(/assets/fonds/Roboto-VariableFont_wdth\,wght.ttf) format("truetype-variations");
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-display: swap;
 }
 *,
 *::before,
@@ -1541,6 +1544,11 @@ a:hover {
   align-items: center;
   gap: 10px;
   color: #3873A9;
+  transition: color 0.2s ease;
+}
+.main-projects__link svg path {
+  fill: currentColor;
+  transition: fill 0.2s ease;
 }
 .main-projects__link:hover {
   text-decoration: none;
@@ -1592,6 +1600,7 @@ a:hover {
 .main-delivery__icon {
   height: 44px;
   width: 44px;
+  flex-shrink: 0;
   border-radius: 50%;
   background-color: #3873A9;
   display: flex;
@@ -1775,7 +1784,7 @@ a:hover {
   background-image: url(/assets/09b8f8dbd7112df2a48e0877ed005396212bf5d8.jpg);
   background-size: cover;
   background-position: center;
-  height: 630px;
+  min-height: 630px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1791,13 +1800,12 @@ a:hover {
 .about_us-catalog__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(305px, auto));
   gap: 20px;
-  height: 630px;
 }
 .about_us-catalog__item {
   justify-content: space-between;
-  height: 100%;
+  height: auto;
   min-height: 0;
 }
 .about_us-catalog__icon {
@@ -1813,10 +1821,10 @@ a:hover {
     grid-template-columns: 1fr;
   }
   .about_us-catalog__left {
-    height: 560px;
+    min-height: 560px;
   }
   .about_us-catalog__grid {
-    height: 560px;
+    min-height: 560px;
   }
 }
 @media screen and (max-width: 575.98px) {
@@ -1839,6 +1847,71 @@ a:hover {
     height: auto;
   }
 }
+/* Защита вёрстки от «неразрывного» и сверхдлинного текста (например, &nbsp; из Word):
+   разрешаем элементам сетки сжиматься, а тексту — переноситься. */
+.main-delivery__item,
+.main-new__item,
+.main-projects__item,
+.main-products__item,
+.about_us-catalog__item,
+.about_us-catalog__info {
+  min-width: 0;
+}
+.main-head__text,
+.main-about_us__text,
+.main-delivery__name,
+.main-delivery__text,
+.main-new__name,
+.main-projects__name,
+.main-projects__text,
+.main-products__name,
+.about_us-description__text,
+.about_us-head__title,
+.about_us-head__text,
+.about_us-invitation__text {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Контент из Markdown-редактора (баннер, доставка, слайдер, страница «О компании»):
+   убираем краевые отступы у обёрток <p>/списков, чтобы текст вставал как раньше,
+   но сохраняем интервалы между абзацами. */
+.main-head__text > :first-child,
+.main-about_us__text > :first-child,
+.main-delivery__text > :first-child,
+.about_us-head__text > :first-child,
+.about_us-description__text > :first-child,
+.about_us-invitation__text > :first-child {
+  margin-top: 0;
+}
+.main-head__text > :last-child,
+.main-about_us__text > :last-child,
+.main-delivery__text > :last-child,
+.about_us-head__text > :last-child,
+.about_us-description__text > :last-child,
+.about_us-invitation__text > :last-child {
+  margin-bottom: 0;
+}
+
+/* Списки внутри центрированных Markdown-блоков: маркеры вплотную к тексту,
+   сам список выравниваем влево, но центрируем как блок. */
+.main-head__text ul,
+.main-head__text ol,
+.about_us-head__text ul,
+.about_us-head__text ol,
+.about_us-invitation__text ul,
+.about_us-invitation__text ol {
+  display: inline-block;
+  text-align: left;
+  margin: 0.5em 0 0;
+  padding-left: 1.4em;
+}
+.about_us-invitation__text li,
+.about_us-head__text li,
+.main-head__text li {
+  margin-bottom: 4px;
+}
+
 .about_us-invitation {
   position: relative;
   overflow: hidden;

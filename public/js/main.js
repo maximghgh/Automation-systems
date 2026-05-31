@@ -45,20 +45,28 @@
     return 65;
   }
 
-  function animateText(node, value, direction, withAnimation) {
+  function animateText(node, value, direction, withAnimation, asHtml) {
     if (!node) {
       return;
     }
 
+    function setContent() {
+      if (asHtml) {
+        node.innerHTML = value;
+      } else {
+        node.textContent = value;
+      }
+    }
+
     if (!withAnimation) {
-      node.textContent = value;
+      setContent();
       return;
     }
 
     var animationClass = direction >= 0 ? "is-slide-up" : "is-slide-down";
     node.classList.remove("is-slide-up", "is-slide-down");
     void node.offsetWidth;
-    node.textContent = value;
+    setContent();
     node.classList.add(animationClass);
 
     if (node._aboutAnimTimer) {
@@ -101,8 +109,8 @@
       currentNode.textContent = formatIndex(displayIndex + 1);
     }
 
-    animateText(subtitleNode, subtitle, direction, withAnimation);
-    animateText(textNode, text, direction, withAnimation);
+    animateText(subtitleNode, subtitle, direction, withAnimation, false);
+    animateText(textNode, text, direction, withAnimation, true);
 
     currentIndex = displayIndex;
     previousIndex = displayIndex;

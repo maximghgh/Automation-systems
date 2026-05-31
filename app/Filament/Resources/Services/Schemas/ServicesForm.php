@@ -15,13 +15,18 @@ class ServicesForm
         return $schema->schema([
             TextInput::make('title')
                 ->label('Название услуги')
-                ->placeholder('Проект')
+                ->placeholder('Услуга')
                 ->required()
                 ->maxLength(255),
 
             FileUpload::make('image')
                 ->label('Картинка')
                 ->image()
+                ->maxSize(5120) // 5 МБ
+                ->imageResizeMode('contain')
+                ->imageResizeTargetWidth('1920')
+                ->imageResizeTargetHeight('1920')
+                ->imageResizeUpscale(false)
                 ->disk('public')
                 ->directory('services')
                 ->visibility('public')

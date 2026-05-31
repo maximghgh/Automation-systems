@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AboutPage;
+use App\Support\RichText;
 
 class AboutPageController extends Controller
 {
@@ -11,19 +12,19 @@ class AboutPageController extends Controller
         $about = AboutPage::query()->find(1);
 
         $data = [
-            'banner_title' => $about?->banner_title ?? 'О компании',
-            'banner_text' => $about?->banner_text,
-            'company_text' => $about?->company_text,
+            'banner_title' => RichText::normalize($about?->banner_title) ?? 'О компании',
+            'banner_text' => RichText::toHtml($about?->banner_text),
+            'company_text' => RichText::toHtml($about?->company_text),
             'advantages_items' => collect($about?->advantages_items ?? $this->getDefaultAdvantagesItems())
                 ->map(fn ($item) => [
-                    'title' => $item['title'] ?? null,
-                    'text' => $item['text'] ?? null,
+                    'title' => RichText::normalize($item['title'] ?? null),
+                    'text' => RichText::toHtml($item['text'] ?? null),
                     'icon' => $item['icon'] ?? null,
                 ])
                 ->values()
                 ->all(),
-            'catalog_title' => $about?->catalog_title ?? 'Перейти в каталог',
-            'catalog_text' => $about?->catalog_text,
+            'catalog_title' => RichText::normalize($about?->catalog_title) ?? 'Перейти в каталог',
+            'catalog_text' => RichText::toHtml($about?->catalog_text),
         ];
 
         return response()->json($data);

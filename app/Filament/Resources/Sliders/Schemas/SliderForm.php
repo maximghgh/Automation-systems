@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Sliders\Schemas;
 
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -18,11 +18,9 @@ class SliderForm
                 ->required()
                 ->maxLength(255),
 
-            Textarea::make('description')
+            MarkdownEditor::make('description')
                 ->label('Описание')
-                ->placeholder('Описание')
                 ->required()
-                ->rows(6)
                 ->columnSpanFull(),
 
             FileUpload::make('image')

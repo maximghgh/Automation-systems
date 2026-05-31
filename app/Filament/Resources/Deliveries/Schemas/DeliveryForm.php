@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Deliveries\Schemas;
 
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\MarkdownEditor;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -14,8 +13,8 @@ class DeliveryForm
     {
         return $schema->schema([
             TextInput::make('title')
-                ->label('Название приемущества')
-                ->placeholder('Проект')
+                ->label('Название')
+                ->placeholder('Название')
                 ->required()
                 ->maxLength(255),
 
@@ -27,11 +26,9 @@ class DeliveryForm
                 ->visibility('public')
                 ->nullable(),
 
-            Textarea::make('description')
+            MarkdownEditor::make('description')
                 ->label('Описание')
-                ->placeholder('Описание')
                 ->required()
-                ->rows(6)
                 ->columnSpanFull(),
 
         ]);

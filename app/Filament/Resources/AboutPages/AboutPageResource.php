@@ -22,9 +22,9 @@ class AboutPageResource extends Resource
     
     protected static bool $shouldRegisterNavigation = false;
 
-    protected static ?string $navigationLabel = 'Страница приемущества';
-    protected static ?string $pluralModelLabel = 'Страница приемущества';
-    protected static ?string $modelLabel = 'Страница приемущества';
+    protected static ?string $navigationLabel = 'Страница «О компании»';
+    protected static ?string $pluralModelLabel = 'Страница «О компании»';
+    protected static ?string $modelLabel = 'Страница «О компании»';
 
     protected static ?string $recordTitleAttribute = 'AboutPage';
 

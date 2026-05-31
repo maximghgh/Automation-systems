@@ -145,7 +145,13 @@
       <div class="main-head__container">
         <div class="main-head__info">
           <h1 class="main-head__title">{{ $mainBanner?->title ?? 'Ваши задачи - наши решения!' }}</h1>
-          <p class="main-head__text">{{ $mainBanner?->description ?? 'Специализируемся на поставках оборудования для автоматизированных систем управления технологическими процессами.' }}</p>
+          <div class="main-head__text">
+            @if($mainBanner?->description)
+              {!! \App\Support\RichText::toHtml($mainBanner->description) !!}
+            @else
+              <p>Специализируемся на поставках оборудования для автоматизированных систем управления технологическими процессами.</p>
+            @endif
+          </div>
         </div>
         <a href="{{ route('catalog.page') }}" class="btn btn__white main-head__btn">Перейти в каталог</a>
       </div>
@@ -158,14 +164,14 @@
         <div class="main-about_us__content">
           <p class="main-about_us__number"><span>01</span>/<span class="main-about_us__number-total">07</span></p>
           <p class="main-about_us__subtitle">Ваши задачи – наши решения!</p>
-          <p class="main-about_us__text">На нашем сайте системы автоматизации в разделе продукция вы сможете найти любые приборы контроля для промышленной автоматики, датчики, регуляторы, реле. С помощью раздела сделать запрос вы сможете заказать нужную вам продукцию, имеющуюся у нас на сайте, а так же задать свой вопрос, наши менеджеры непременно в кратчайшие сроки с вами свяжутся.</p>
+          <div class="main-about_us__text">На нашем сайте системы автоматизации в разделе продукция вы сможете найти любые приборы контроля для промышленной автоматики, датчики, регуляторы, реле. С помощью раздела сделать запрос вы сможете заказать нужную вам продукцию, имеющуюся у нас на сайте, а так же задать свой вопрос, наши менеджеры непременно в кратчайшие сроки с вами свяжутся.</div>
         </div>
         <div class="main-about_us__slider">
           <button type="button" class="main-about_us__nav main-about_us__prev" aria-label="Предыдущий слайд"></button>
           <div class="main-about_us__slider-swiper swiper">
             <div class="swiper-wrapper">
               @forelse($slides ?? collect() as $slide)
-                <div class="swiper-slide main-about_us__slide" data-subtitle="{{ $slide->title }}" data-text="{{ $slide->description }}">
+                <div class="swiper-slide main-about_us__slide" data-subtitle="{{ $slide->title }}" data-text="{{ \App\Support\RichText::toHtml($slide->description) }}">
                   <img src="{{ $mediaUrl($slide->image, '/assets/2c8c4bb8cfc36f85dd070c153118f566794a76e5.jpg') }}" alt="{{ $slide->title }}">
                 </div>
                             @empty
@@ -368,9 +374,9 @@
             <img src="{{ $mediaUrl($delivery->icon) }}" alt="{{ $delivery->title }}" style="width: 24px; height: 24px; object-fit: contain;">
           </div>
           <p class="main-delivery__name">{{ $delivery->title }}</p>
-          <p class="main-delivery__text">
-            {{ $delivery->description }}
-          </p>
+          <div class="main-delivery__text">
+            {!! \App\Support\RichText::toHtml($delivery->description) !!}
+          </div>
         </div>
                 @empty
         <div class="main-empty-state">

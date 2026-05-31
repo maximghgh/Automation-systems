@@ -6,7 +6,7 @@ use App\Models\AboutPage;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -68,17 +68,15 @@ class AboutPageSettings extends Page implements HasForms
                             ->label('Заголовок')
                             ->required(),
 
-                        Textarea::make('banner_text')
+                        MarkdownEditor::make('banner_text')
                             ->label('Текст')
-                            ->rows(4)
                             ->nullable(),
                     ]),
 
                 Section::make('О компании')
                     ->schema([
-                        Textarea::make('company_text')
+                        MarkdownEditor::make('company_text')
                             ->label('Текст')
-                            ->rows(8)
                             ->nullable(),
                     ]),
 
@@ -98,9 +96,8 @@ class AboutPageSettings extends Page implements HasForms
                                     ->label('Заголовок')
                                     ->required(),
 
-                                Textarea::make('text')
+                                MarkdownEditor::make('text')
                                     ->label('Текст')
-                                    ->rows(3)
                                     ->nullable(),
 
                                 FileUpload::make('icon')
@@ -122,9 +119,8 @@ class AboutPageSettings extends Page implements HasForms
                             ->label('Заголовок')
                             ->required(),
 
-                        Textarea::make('catalog_text')
+                        MarkdownEditor::make('catalog_text')
                             ->label('Текст')
-                            ->rows(4)
                             ->nullable(),
                     ]),
             ]);

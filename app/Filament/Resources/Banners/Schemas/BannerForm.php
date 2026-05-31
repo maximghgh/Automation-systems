@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Banners\Schemas;
 
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\FileUpload;
 
 class BannerForm
@@ -18,11 +18,9 @@ class BannerForm
                 ->required()
                 ->maxLength(255),
 
-            Textarea::make('description')
+            MarkdownEditor::make('description')
                 ->label('Описание')
-                ->placeholder('Описание')
                 ->required()
-                ->rows(6)
                 ->columnSpanFull(),
 
             FileUpload::make('image')

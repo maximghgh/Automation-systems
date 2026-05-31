@@ -14,18 +14,18 @@
     <section class="about_us-head">
       <div class="about_us-head__container">
         <h1 class="about_us-head__title" data-about-banner-title>О компании «Системы автоматизации»</h1>
-        <h2 class="about_us-head__text" data-about-banner-text>
+        <div class="about_us-head__text" data-about-banner-text>
           Мы занимаемся разработкой, сборкой и установкой шкафов автоматики из комплектующих ведущих отечественных и зарубежных производителей, оказываем техническую и информационную поддержку.
-        </h2>
+        </div>
       </div>
     </section>
 
     <section class="about_us-description">
       <div class="about_us-description__container">
         <h3 class="about_us-description__title">Системы автоматизации</h3>
-        <p class="about_us-description__text" data-about-company-text>
+        <div class="about_us-description__text" data-about-company-text>
           Специалисты компании «Системы автоматизации» готовы посетить Ваше предприятие, ознакомиться с существующими задачами автоматизации, помочь в подготовке технического задания и в кратчайшие сроки предоставить Вам подробное технико-коммерческое предложение, оказать профессиональную помощь в настройке оборудования.
-        </p>
+        </div>
       </div>
     </section>
 
@@ -44,7 +44,7 @@
             </div>
             <div class="about_us-catalog__info">
               <p class="main-delivery__name" data-about-adv-title>Широкий ассортимент</p>
-              <p class="main-delivery__text" data-about-adv-text>Постоянно пополняемый склад продукции</p>
+              <div class="main-delivery__text" data-about-adv-text>Постоянно пополняемый склад продукции</div>
             </div>
           </div>
 
@@ -56,7 +56,7 @@
             </div>
             <div class="about_us-catalog__info">
               <p class="main-delivery__name" data-about-adv-title>Контроль качества</p>
-              <p class="main-delivery__text" data-about-adv-text>Партии проходят многоуровневую проверку перед отгрузкой</p>
+              <div class="main-delivery__text" data-about-adv-text>Партии проходят многоуровневую проверку перед отгрузкой</div>
             </div>
           </div>
 
@@ -68,7 +68,7 @@
             </div>
             <div class="about_us-catalog__info">
               <p class="main-delivery__name" data-about-adv-title>Продуманная логистика</p>
-              <p class="main-delivery__text" data-about-adv-text>Доставка оплаченных товаров возможна удобным для вас способом</p>
+              <div class="main-delivery__text" data-about-adv-text>Доставка оплаченных товаров возможна удобным для вас способом</div>
             </div>
           </div>
 
@@ -80,7 +80,7 @@
             </div>
             <div class="about_us-catalog__info">
               <p class="main-delivery__name" data-about-adv-title>Прием заявок</p>
-              <p class="main-delivery__text" data-about-adv-text>Заявки на доставку принимаются с сайта и по телефону</p>
+              <div class="main-delivery__text" data-about-adv-text>Заявки на доставку принимаются с сайта и по телефону</div>
             </div>
           </div>
         </div>
@@ -90,9 +90,9 @@
     <section class="about_us-invitation">
       <div class="about_us-invitation__container">
         <p class="about_us-catalog__left-text" style="margin-bottom: 10px;" data-about-catalog-title>Станьте нашим клиентом</p>
-        <p class="about_us-invitation__text" data-about-catalog-text>
+        <div class="about_us-invitation__text" data-about-catalog-text>
           На нашем сайте системы автоматизации в разделе продукция вы сможете найти любые приборы контроля для промышленной автоматики, датчики, регуляторы, реле.
-        </p>
+        </div>
         <a href="{{ route('catalog.page') }}" class="btn btn__white main-products__btn">Перейти в каталог</a>
       </div>
     </section>
@@ -262,6 +262,19 @@
         node.textContent = trimmed;
       }
 
+      function setHtml(node, value) {
+        if (!node || typeof value !== "string") {
+          return;
+        }
+
+        var trimmed = value.trim();
+        if (!trimmed.length) {
+          return;
+        }
+
+        node.innerHTML = trimmed;
+      }
+
       fetch(endpoint, {
         headers: {
           "Accept": "application/json"
@@ -276,10 +289,10 @@
         })
         .then(function (data) {
           setText(document.querySelector("[data-about-banner-title]"), data.banner_title);
-          setText(document.querySelector("[data-about-banner-text]"), data.banner_text);
-          setText(document.querySelector("[data-about-company-text]"), data.company_text);
+          setHtml(document.querySelector("[data-about-banner-text]"), data.banner_text);
+          setHtml(document.querySelector("[data-about-company-text]"), data.company_text);
           setText(document.querySelector("[data-about-catalog-title]"), data.catalog_title);
-          setText(document.querySelector("[data-about-catalog-text]"), data.catalog_text);
+          setHtml(document.querySelector("[data-about-catalog-text]"), data.catalog_text);
 
           var cards = document.querySelectorAll("[data-about-adv-item]");
           var items = Array.isArray(data.advantages_items) ? data.advantages_items : [];
@@ -298,7 +311,7 @@
             card.style.display = "";
 
             setText(titleNode, item.title);
-            setText(textNode, item.text);
+            setHtml(textNode, item.text);
 
             var textValue = typeof item.text === "string" ? item.text.trim() : "";
             if (textNode) {

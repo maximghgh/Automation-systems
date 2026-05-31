@@ -212,7 +212,7 @@
       }
 
       var mapCenter = [56.83755, 53.228378];
-      var markerIcon = @json(asset('assets/Point.png'));
+      var markerIcon = @json(asset('assets/Point.svg'));
       var yandexScriptUrl = "https://api-maps.yandex.ru/2.1/?apikey=38e8671e-3c02-48e7-8432-c204818d7056&lang=ru_RU";
 
       function initContactMap() {
