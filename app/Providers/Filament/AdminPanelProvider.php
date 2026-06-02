@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->brandName('Системы автоматизации')
+            ->favicon(asset('favicon.svg'))
             ->homeUrl('/admin')
             ->default()
             ->id('admin')

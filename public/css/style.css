@@ -622,6 +622,8 @@ a:hover {
   display: block;
   width: 100%;
   height: auto;
+  /* логотип в подвале — белым на тёмном фоне */
+  filter: brightness(0) invert(1);
 }
 .footer__logo p {
   color: #ffffff;
@@ -714,7 +716,6 @@ a:hover {
   background-image: url(/assets/2c8c4bb8cfc36f85dd070c153118f566794a76e5.jpg);
   background-size: cover;
   background-position: center;
-  transform: scaleX(-1);
   z-index: 0;
 }
 .main-head::after {
@@ -1636,10 +1637,11 @@ a:hover {
 }
 .main-delivery__transport-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 .main-delivery__transport-number {
+  flex-shrink: 0;
   width: 24px;
   height: 24px;
   color: #ffffff;
@@ -1649,6 +1651,9 @@ a:hover {
   font-size: 14px;
   font-weight: 400;
   line-height: 24px;
+}
+.main-delivery__transport-name {
+  align-self: center;
 }
 .main-delivery__transport-name {
   font-size: 14px;
@@ -1879,10 +1884,15 @@ a:hover {
 .main-head__text > :first-child,
 .main-about_us__text > :first-child,
 .main-delivery__text > :first-child,
+.about_us-head__title > :first-child,
 .about_us-head__text > :first-child,
 .about_us-description__text > :first-child,
 .about_us-invitation__text > :first-child {
   margin-top: 0;
+}
+/* Заголовок баннера теперь из Markdown-редактора: убираем отступы у обёртки <p> внутри <h1> */
+.about_us-head__title > :last-child {
+  margin-bottom: 0;
 }
 .main-head__text > :last-child,
 .main-about_us__text > :last-child,
@@ -1893,22 +1903,39 @@ a:hover {
   margin-bottom: 0;
 }
 
-/* Списки внутри центрированных Markdown-блоков: маркеры вплотную к тексту,
-   сам список выравниваем влево, но центрируем как блок. */
+/* Списки внутри центрированных Markdown-блоков: маркеры идут вместе с текстом
+   и центрируются построчно, а не прижимаются к левому краю. */
 .main-head__text ul,
 .main-head__text ol,
 .about_us-head__text ul,
 .about_us-head__text ol,
+.about_us-description__text ul,
+.about_us-description__text ol,
 .about_us-invitation__text ul,
 .about_us-invitation__text ol {
-  display: inline-block;
-  text-align: left;
-  margin: 0.5em 0 0;
-  padding-left: 1.4em;
+  display: block;
+  list-style-position: inside;
+  text-align: center;
+  margin: 0.6em auto 0;
+  padding-left: 0;
 }
 .about_us-invitation__text li,
 .about_us-head__text li,
+.about_us-description__text li,
 .main-head__text li {
+  margin-bottom: 4px;
+}
+
+/* Левый блок «О компании» на главной: глобальный сброс padding обнуляет отступ
+   у списков, из-за чего цифры/маркеры вылезают за левую границу текста.
+   Выравниваем маркеры заподлицо с текстом (и левой границей блока). */
+.main-about_us__text ol,
+.main-about_us__text ul {
+  list-style-position: inside;
+  padding-left: 0;
+  margin: 0.5em 0;
+}
+.main-about_us__text li {
   margin-bottom: 4px;
 }
 
@@ -3041,7 +3068,9 @@ a:hover {
 }
 .company__info {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  /* minmax(0, …) — чтобы колонки могли сжиматься и длинные значения
+     (реквизиты, номер счёта) не растягивали грид за пределы экрана */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   gap: 21px 21px;
 }
 .company__name {
@@ -3049,15 +3078,27 @@ a:hover {
   font-size: 16px;
   line-height: 20px;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .company__value {
   color: #1c1c1c;
   font-size: 16px;
   line-height: 20px;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 .company__end {
   height: 100px;
+}
+@media screen and (max-width: 575.98px) {
+  /* на телефоне реквизиты в одну колонку, чтобы не было горизонтального скролла */
+  .company__info {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .company__info .company__value {
+    margin-bottom: 12px;
+  }
 }
 
 .legal-page {

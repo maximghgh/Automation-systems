@@ -12,7 +12,7 @@ class AboutPageController extends Controller
         $about = AboutPage::query()->find(1);
 
         $data = [
-            'banner_title' => RichText::normalize($about?->banner_title) ?? 'О компании',
+            'banner_title' => RichText::toHtml($about?->banner_title) ?: 'О компании',
             'banner_text' => RichText::toHtml($about?->banner_text),
             'company_text' => RichText::toHtml($about?->company_text),
             'advantages_items' => collect($about?->advantages_items ?? $this->getDefaultAdvantagesItems())

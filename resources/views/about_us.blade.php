@@ -288,7 +288,7 @@
           return response.json();
         })
         .then(function (data) {
-          setText(document.querySelector("[data-about-banner-title]"), data.banner_title);
+          setHtml(document.querySelector("[data-about-banner-title]"), data.banner_title);
           setHtml(document.querySelector("[data-about-banner-text]"), data.banner_text);
           setHtml(document.querySelector("[data-about-company-text]"), data.company_text);
           setText(document.querySelector("[data-about-catalog-title]"), data.catalog_title);

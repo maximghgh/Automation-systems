@@ -64,7 +64,7 @@ class AboutPageSettings extends Page implements HasForms
             ->components([
                 Section::make('Баннер')
                     ->schema([
-                        TextInput::make('banner_title')
+                        MarkdownEditor::make('banner_title')
                             ->label('Заголовок')
                             ->required(),
 
